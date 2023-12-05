@@ -10,17 +10,21 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
+import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
+import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 @SpringBootApplication
 public class CloudlogSimpleLoggerApplication extends JFrame  {
@@ -33,16 +37,17 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
+	private Timer timer;
 	private final JCheckBox qsoOffline = new JCheckBox("Offline");
 	private final JComboBox<String> qsoStation = new JComboBox<>();
 	private final JFormattedTextField qsoDate = new JFormattedTextField(dateFormat);
 	private final JFormattedTextField qsoTime = new JFormattedTextField(timeFormat);
-	private final JComboBox<String> qsoMode = new JComboBox<>();
-	private final JComboBox<String> qsoBand = new JComboBox<>();
+	private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
+	private final JComboBox<QsoBand> qsoBand = new JComboBox<>();
 	private final JTextField qsoFreq = new JTextField();
 	private final JTextField qsoCall = new JTextField();
-	private final JTextField qsoRstS = new JTextField();
-	private final JTextField qsoRstR = new JTextField();
+	private final JTextField qsoRstS = new JTextField("59");
+	private final JTextField qsoRstR = new JTextField("59");
 	private final JTextField qsoName = new JTextField();
 	private final JTextField qsoLocation = new JTextField();
 	private final JTextArea qsoComment = new JTextArea();
@@ -104,6 +109,8 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		qsoStatus.setEditable(false);
 		qsoStatus.setEnabled(false);
 		qsoStatus.setFocusable(false);
+		qsoDate.setEditable(false);
+		qsoTime.setEditable(false);
 
 		adifLogs.setEditable(false);
 		adifLogs.setEnabled(false);
@@ -114,6 +121,20 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	}
 
 	private void initializeActions() {
+		qsoOffline.addItemListener(e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				qsoDate.setEditable(true);
+				qsoDate.setText("");
+				qsoTime.setEditable(true);
+				qsoTime.setText("");
+				timer.stop();
+			} else {
+				qsoDate.setEditable(false);
+				qsoTime.setEditable(false);
+				timer.start();
+			}
+		});
+
 		settSave.addActionListener(e -> {
 			String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).getBytes());
 			Settings settings = Settings.builder()
@@ -126,6 +147,49 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 			SettingsManager.save(settings);
 			JOptionPane.showMessageDialog(this, "Saved");
 		});
+
+		qsoMode.addItemListener(e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				System.out.println("Wybrany element: " + e.getItem());
+				determineFreq();
+			}
+		});
+
+		qsoBand.addItemListener(e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				System.out.println("Wybrany element: " + e.getItem());
+				determineFreq();
+			}
+		});
+
+		createTimer();
+	}
+
+	private void createTimer() {
+		ActionListener updateClockAction = e -> {
+			if (!qsoOffline.isSelected()) {
+				qsoDate.setText(dateFormat.format(new Date()));
+				qsoTime.setText(timeFormat.format(new Date()));
+			}
+		};
+		timer = new Timer(1000, updateClockAction); // Timer wyzwala się co 1000ms (1 sekunda)
+		timer.start();
+	}
+
+	private void determineFreq() {
+		QsoMode mode = (QsoMode) qsoMode.getSelectedItem();
+		QsoBand band = (QsoBand) qsoBand.getSelectedItem();
+
+		if (mode != null && band != null) {
+            long freq =
+			switch (mode.getQsoKind()) {
+				case VOICE -> band.getVoiceFreq();
+				case DATA -> band.getDataFreq();
+				case CW -> band.getCwFreq();
+            };
+
+			qsoFreq.setText(String.valueOf(freq));
+		}
 	}
 
 	private void loadSettings() {
@@ -161,6 +225,11 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 			}
 		};
 		worker.execute();
+
+		Arrays.stream(QsoMode.values()).forEach(e -> qsoMode.addItem(e));
+
+		Arrays.stream(QsoBand.values()).forEach(e -> qsoBand.addItem(e));
+
 	}
 
 
