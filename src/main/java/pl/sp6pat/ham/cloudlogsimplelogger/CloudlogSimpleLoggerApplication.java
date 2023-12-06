@@ -3,6 +3,10 @@ package pl.sp6pat.ham.cloudlogsimplelogger;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import lombok.SneakyThrows;
+import org.marsik.ham.adif.AdiWriter;
+import org.marsik.ham.adif.Adif3Record;
+import org.marsik.ham.adif.enums.Band;
+import org.marsik.ham.adif.enums.Mode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,16 +19,18 @@ import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.*;
 
 @SpringBootApplication
 public class CloudlogSimpleLoggerApplication extends JFrame  {
@@ -32,6 +38,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private static Logger log = LoggerFactory.getLogger(CloudlogSimpleLoggerApplication.class);
 
 	private Settings settings;
+	private CloudlogIntegrationService service;
 	private final JTabbedPane tab = new JTabbedPane();
 
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -39,7 +46,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private Timer timer;
 	private final JCheckBox qsoOffline = new JCheckBox("Offline");
-	private final JComboBox<String> qsoStation = new JComboBox<>();
+	private final JComboBox<Station> qsoStation = new JComboBox<>();
 	private final JFormattedTextField qsoDate = new JFormattedTextField(dateFormat);
 	private final JFormattedTextField qsoTime = new JFormattedTextField(timeFormat);
 	private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
@@ -49,7 +56,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private final JTextField qsoRstS = new JTextField("59");
 	private final JTextField qsoRstR = new JTextField("59");
 	private final JTextField qsoName = new JTextField();
-	private final JTextField qsoLocation = new JTextField();
+	private final JTextField qsoQth = new JTextField();
 	private final JTextArea qsoComment = new JTextArea();
 	private final JTextArea qsoStatus = new JTextArea();
 	private final JButton qsoAdd = new JButton("Add QSO");;
@@ -83,10 +90,12 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	public CloudlogSimpleLoggerApplication() {
 		super("Cloudlog Simple Logger");
-		initializeComponents();
-		initializeActions();
 
 		loadSettings();
+		service = new CloudlogIntegrationService(settings);
+
+		initializeComponents();
+		initializeActions();
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setContentPane(getMainPanel());
@@ -105,7 +114,6 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private void initializeComponents() {
 
-		qsoComment.setFocusable(false);
 		qsoStatus.setEditable(false);
 		qsoStatus.setEnabled(false);
 		qsoStatus.setFocusable(false);
@@ -133,6 +141,41 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				qsoTime.setEditable(false);
 				timer.start();
 			}
+		});
+
+
+
+		qsoAdd.addActionListener( e -> {
+
+			Station selectedItem = (Station) qsoStation.getSelectedItem();
+
+			Adif3Record record = new Adif3Record();
+
+			record.setCall(qsoCall.getText());
+			record.setRstSent(qsoRstS.getText());
+			record.setRstRcvd(qsoRstR.getText());
+			record.setName(qsoName.getText());
+			record.setQth(qsoQth.getText());
+			record.setComment(qsoComment.getText());
+
+			record.setQsoDate(LocalDate.parse(qsoDate.getText()));
+			record.setTimeOn(LocalTime.parse(qsoTime.getText()));
+			record.setMode(Mode.SSB); //FIXME:
+			record.setBand(Band.BAND_80m); //FIXME:
+			record.setFreq(Long.parseLong(qsoFreq.getText()) / 1000.0);
+
+			record.setStationCallsign(selectedItem.getStationCallsign());
+			record.setOperator(settings.getOperator());			;
+
+			AdiWriter writer = new AdiWriter();
+			writer.append(record);
+			log.info(writer.toString());
+
+			qsoAdd.setEnabled(false);
+			qsoStatus.setText("");
+			AddQsoWorker worker = new AddQsoWorker(writer.toString());
+			worker.execute();
+
 		});
 
 		settSave.addActionListener(e -> {
@@ -211,8 +254,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		SwingWorker<List<Station>, Void> worker = new SwingWorker<List<Station>, Void>() {
 			@Override
 			protected List<Station> doInBackground() throws Exception {
-				CloudlogIntegrationService s = new CloudlogIntegrationService(settings);
-                return s.getStations();
+                return service.getStations();
 			}
 
 			@SneakyThrows
@@ -220,16 +262,19 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 			protected void done() {
 					List<Station> data = get();
 					for (Station item : data) {
-						qsoStation.addItem(item.toString());
+						qsoStation.addItem(item);
 					}
+				Optional<Station> activeStation = data.stream().filter(e -> e.getStationActive() > 0).findFirst();
+                activeStation.ifPresent(qsoStation::setSelectedItem);
 			}
 		};
 		worker.execute();
 
 		Arrays.stream(QsoMode.values()).forEach(e -> qsoMode.addItem(e));
+		qsoMode.setSelectedItem(QsoMode.SSB);
 
 		Arrays.stream(QsoBand.values()).forEach(e -> qsoBand.addItem(e));
-
+		qsoBand.setSelectedItem(QsoBand.BAND_80m);
 	}
 
 
@@ -268,8 +313,8 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				.add(qsoRstR).xy(3,9)
 				.addLabel("Name:").xy(1,11)
 				.add(qsoName).xy(3, 11)
-				.addLabel("Location:").xy(1,13)
-				.add(qsoLocation).xy(3, 13)
+				.addLabel("QTH:").xy(1,13)
+				.add(qsoQth).xy(3, 13)
 				.addLabel("Comment:").xy(1,15)
 				.add(new JScrollPane(qsoComment)).xy(3, 15)
 
@@ -335,6 +380,28 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	}
 
 
+	class AddQsoWorker extends SwingWorker<Void, String> {
+		private final String qso;
+
+		public AddQsoWorker(String qso) {
+			this.qso = qso;
+		}
+
+		@Override
+		protected Void doInBackground() throws Exception {
+			log.info("QSO to add: {}", qso);
+			service.importQso(settings, 1, qso); //FIXME:
+			return null;
+		}
+
+		@Override
+		protected void done() {
+			qsoAdd.setEnabled(true);
+			qsoStatus.setText("Dodano QSO");
+		}
+
+
+	}
 
 
 }

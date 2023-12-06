@@ -1,16 +1,23 @@
 package pl.sp6pat.ham.cloudlogsimplelogger.cloudlog;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
 import org.springframework.http.codec.xml.Jaxb2XmlEncoder;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.yaml.snakeyaml.Yaml;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.util.List;
 
 public class CloudlogIntegrationService {
@@ -47,11 +54,38 @@ public class CloudlogIntegrationService {
                 .block();
     }
 
-    private void importQso(Qso qso) {
+    public void importQso(Settings setting, Integer stationId, String qso) throws JsonProcessingException {
 
+        Qso qsoRequest = Qso.builder()
+                .key(setting.getApiKey())
+                .stationProfileId(String.valueOf(stationId))
+                .type("adif")
+                .string(qso)
+                .build();
+
+        log.info("QSO Request:");
+        log.info(qsoRequest.toString());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+//        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        String body = objectMapper.writeValueAsString(qsoRequest) ;
+
+        log.info(body);
+
+        String result = this.webClient.post()
+                .uri("/index.php/api/qso")
+                .body(Mono.just(body), String.class)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        log.info("Result");
+        log.info(result.toString());
     }
 
-    private void importQso(String filePath) {
+
+    public void importQso(File file) {
 //        Mono<QRZResponse> stringMono = webClient.get()
 //                .uri("?username={USER}&password={PASS}&agent={AGENT}", login, pass, AdifToolApplication.PRG_NAME)
 //                .accept(MediaType.APPLICATION_XML)

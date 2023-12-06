@@ -1,20 +1,21 @@
 package pl.sp6pat.ham.cloudlogsimplelogger.cloudlog;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Qso {
 
-    private String date;
-    private String time;
-    private String mode;
-    private String band;
-    private String freq;
-    private String call;
-    private String rstS;
-    private String rstR;
-    private String name;
-    private String location;
-    private String comment;
+    private String key;
+    @JsonProperty("station_profile_id")
+    private String stationProfileId;
+    private String type;
+    private String string;
 
 }
