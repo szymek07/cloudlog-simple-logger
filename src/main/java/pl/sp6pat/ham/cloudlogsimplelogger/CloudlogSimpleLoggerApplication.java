@@ -382,6 +382,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	class AddQsoWorker extends SwingWorker<Void, String> {
 		private final String qso;
+		private String status;
 
 		public AddQsoWorker(String qso) {
 			this.qso = qso;
@@ -390,14 +391,14 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		@Override
 		protected Void doInBackground() throws Exception {
 			log.info("QSO to add: {}", qso);
-			service.importQso(settings, 1, qso); //FIXME:
+			status = service.importQso(settings, 1, qso); //FIXME:
 			return null;
 		}
 
 		@Override
 		protected void done() {
 			qsoAdd.setEnabled(true);
-			qsoStatus.setText("Dodano QSO");
+			qsoStatus.setText(status);
 		}
 
 

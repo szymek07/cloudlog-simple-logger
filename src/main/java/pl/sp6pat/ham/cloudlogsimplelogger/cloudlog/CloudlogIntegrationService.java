@@ -16,6 +16,8 @@ import org.yaml.snakeyaml.Yaml;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.io.File;
 import java.util.List;
@@ -54,7 +56,7 @@ public class CloudlogIntegrationService {
                 .block();
     }
 
-    public void importQso(Settings setting, Integer stationId, String qso) throws JsonProcessingException {
+    public String importQso(Settings setting, Integer stationId, String qso) throws JsonProcessingException {
 
         Qso qsoRequest = Qso.builder()
                 .key(setting.getApiKey())
@@ -63,14 +65,10 @@ public class CloudlogIntegrationService {
                 .string(qso)
                 .build();
 
-        log.info("QSO Request:");
-        log.info(qsoRequest.toString());
-
         ObjectMapper objectMapper = new ObjectMapper();
-//        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         String body = objectMapper.writeValueAsString(qsoRequest) ;
 
-        log.info(body);
+        log.debug(body);
 
         String result = this.webClient.post()
                 .uri("/index.php/api/qso")
@@ -80,8 +78,17 @@ public class CloudlogIntegrationService {
                 .bodyToMono(String.class)
                 .block();
 
-        log.info("Result");
-        log.info(result.toString());
+        Pattern pattern = Pattern.compile("Message: (.+?)</p>");
+        Matcher matcher = pattern.matcher(result);
+
+        log.debug("Result:\n" + result);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            return "QSO Added";
+        }
+
+
     }
 
 
