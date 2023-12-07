@@ -3,6 +3,8 @@ package pl.sp6pat.ham.cloudlogsimplelogger.cloudlog;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.marsik.ham.adif.AdiWriter;
+import org.marsik.ham.adif.Adif3Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -56,7 +58,7 @@ public class CloudlogIntegrationService {
                 .block();
     }
 
-    public String importQso(Settings setting, Integer stationId, String qso) throws JsonProcessingException {
+    public String importQso(Settings setting, String stationId, String qso) throws JsonProcessingException {
 
         Qso qsoRequest = Qso.builder()
                 .key(setting.getApiKey())
@@ -65,6 +67,25 @@ public class CloudlogIntegrationService {
                 .string(qso)
                 .build();
 
+        return getString(qsoRequest);
+    }
+
+    public String importQso(Settings setting, String stationId, Adif3Record qso) throws JsonProcessingException {
+
+        AdiWriter writer = new AdiWriter();
+        writer.append(qso);
+
+        Qso qsoRequest = Qso.builder()
+                .key(setting.getApiKey())
+                .stationProfileId(String.valueOf(stationId))
+                .type("adif")
+                .string(writer.toString())
+                .build();
+
+        return getString(qsoRequest);
+    }
+
+    private String getString(Qso qsoRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         String body = objectMapper.writeValueAsString(qsoRequest) ;
 
@@ -87,17 +108,6 @@ public class CloudlogIntegrationService {
         } else {
             return "QSO Added";
         }
-
-
     }
 
-
-    public void importQso(File file) {
-//        Mono<QRZResponse> stringMono = webClient.get()
-//                .uri("?username={USER}&password={PASS}&agent={AGENT}", login, pass, AdifToolApplication.PRG_NAME)
-//                .accept(MediaType.APPLICATION_XML)
-//                .retrieve()
-//                .bodyToMono(QRZResponse.class);
-//        return stringMono.block();
-    }
 }

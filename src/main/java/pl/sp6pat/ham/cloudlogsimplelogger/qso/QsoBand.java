@@ -50,4 +50,8 @@ public enum QsoBand {
     public long getCwFreq() {
         return cwFreq;
     }
+
+    public String getBand() {
+        return band;
+    }
 }

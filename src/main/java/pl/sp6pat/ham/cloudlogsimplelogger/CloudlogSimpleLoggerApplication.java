@@ -3,7 +3,9 @@ package pl.sp6pat.ham.cloudlogsimplelogger;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import lombok.SneakyThrows;
+import org.marsik.ham.adif.AdiReader;
 import org.marsik.ham.adif.AdiWriter;
+import org.marsik.ham.adif.Adif3;
 import org.marsik.ham.adif.Adif3Record;
 import org.marsik.ham.adif.enums.Band;
 import org.marsik.ham.adif.enums.Mode;
@@ -25,12 +27,17 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 @SpringBootApplication
 public class CloudlogSimpleLoggerApplication extends JFrame  {
@@ -39,6 +46,9 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private Settings settings;
 	private CloudlogIntegrationService service;
+
+	private List<Adif3Record> adifRecords;
+
 	private final JTabbedPane tab = new JTabbedPane();
 
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -64,7 +74,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private final JComboBox<String> adifStation = new JComboBox<>();
 	private final JTextField adifPath = new JTextField();
 	private final JButton adifBrowse = new JButton("...");
-	private final JLabel adifValidQso = new JLabel();
+	private final JLabel adifQsoCnt = new JLabel();
 	private final JLabel adifInvalidQso = new JLabel();
 	private final JButton adifImport = new JButton("Import");
 	private final JProgressBar adifProgress = new JProgressBar();
@@ -120,6 +130,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		qsoDate.setEditable(false);
 		qsoTime.setEditable(false);
 
+		adifProgress.setStringPainted(true);
 		adifLogs.setEditable(false);
 		adifLogs.setEnabled(false);
 
@@ -147,7 +158,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 		qsoAdd.addActionListener( e -> {
 
-			Station selectedItem = (Station) qsoStation.getSelectedItem();
+			Station stationSelectedItem = (Station) qsoStation.getSelectedItem();
 
 			Adif3Record record = new Adif3Record();
 
@@ -160,20 +171,26 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 			record.setQsoDate(LocalDate.parse(qsoDate.getText()));
 			record.setTimeOn(LocalTime.parse(qsoTime.getText()));
-			record.setMode(Mode.SSB); //FIXME:
-			record.setBand(Band.BAND_80m); //FIXME:
+
+			QsoMode qsoModeSelectedItem = (QsoMode) qsoMode.getSelectedItem();
+			Mode mode = Mode.findByCode(qsoModeSelectedItem.getMode());
+			record.setMode(mode);
+
+			QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
+			Band band = Band.findByCode(qsoBandSelectedItem.getBand());
+			record.setBand(band);
+
 			record.setFreq(Long.parseLong(qsoFreq.getText()) / 1000.0);
 
-			record.setStationCallsign(selectedItem.getStationCallsign());
+			record.setStationCallsign(stationSelectedItem.getStationCallsign());
 			record.setOperator(settings.getOperator());			;
 
 			AdiWriter writer = new AdiWriter();
 			writer.append(record);
-			log.info(writer.toString());
 
 			qsoAdd.setEnabled(false);
 			qsoStatus.setText("");
-			AddQsoWorker worker = new AddQsoWorker(writer.toString());
+			AddQsoWorker worker = new AddQsoWorker(writer.toString(), stationSelectedItem);
 			worker.execute();
 
 		});
@@ -206,6 +223,19 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		});
 
 		createTimer();
+
+		adifBrowse.addActionListener(e -> SwingUtilities.invokeLater(this::browseBtAction));
+
+		adifImport.addActionListener(e -> {
+			adifImport.setEnabled(false);
+			adifLogs.setText("");
+
+			Station stationSelectedItem = (Station) qsoStation.getSelectedItem();
+
+			AdifImportWorker worker = new AdifImportWorker(adifRecords, stationSelectedItem);
+			worker.execute();
+
+		});
 	}
 
 	private void createTimer() {
@@ -225,7 +255,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 		if (mode != null && band != null) {
             long freq =
-			switch (mode.getQsoKind()) {
+			switch (mode.getKind()) {
 				case VOICE -> band.getVoiceFreq();
 				case DATA -> band.getDataFreq();
 				case CW -> band.getCwFreq();
@@ -270,10 +300,10 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		};
 		worker.execute();
 
-		Arrays.stream(QsoMode.values()).forEach(e -> qsoMode.addItem(e));
+		Arrays.stream(QsoMode.values()).forEach(qsoMode::addItem);
 		qsoMode.setSelectedItem(QsoMode.SSB);
 
-		Arrays.stream(QsoBand.values()).forEach(e -> qsoBand.addItem(e));
+		Arrays.stream(QsoBand.values()).forEach(qsoBand::addItem);
 		qsoBand.setSelectedItem(QsoBand.BAND_80m);
 	}
 
@@ -338,7 +368,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private Component getImportPanel() {
 		FormLayout layout = new FormLayout(
 				"p, 3dlu, f:70dlu:g, 3dlu, p",
-				"p, 3dlu, p, 3dlu, p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p:g");
+				"p, 3dlu, p, 3dlu, f:p, 6dlu, f:15dlu, 3dlu, f:p, 3dlu, f:p:g");
 
 		return FormBuilder.create()
 				.layout(layout)
@@ -347,13 +377,11 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				.add(adifPath).xy(3, 1)
 				.add(adifBrowse).xy(5,1)
 				.addLabel("QSO Count:").xy(1,3)
-				.add(adifValidQso).xy(3,3)
-				.addLabel("Invalid QSO Count:").xy(1,5)
-				.add(adifInvalidQso).xy(3,5)
-				.add(adifImport).xyw(1, 7, 5)
-				.add(adifProgress).xyw(1,9,5)
-				.addLabel("Logi:").xy(1, 11)
-				.add(new JScrollPane(adifLogs)).xyw(1, 13, 5)
+				.add(adifQsoCnt).xy(3,3)
+				.add(adifImport).xyw(1, 5, 5)
+				.add(adifProgress).xyw(1,7,5)
+				.addLabel("Logi:").xy(1, 9)
+				.add(new JScrollPane(adifLogs)).xyw(1, 11, 5)
 				.build();
 	}
 
@@ -379,19 +407,64 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				.build();
 	}
 
+	@SneakyThrows
+	private void browseBtAction() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("ADI Files", "adi");
+		fileChooser.setFileFilter(filter);
+		int result = fileChooser.showOpenDialog(this);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			adifPath.setText(selectedFile.getAbsolutePath());
 
-	class AddQsoWorker extends SwingWorker<Void, String> {
+			Optional<Adif3> adif3 = readADI(selectedFile);
+			if (adif3.isPresent()) {
+				adifRecords = adif3.get().getRecords();
+				int size = adifRecords.size();
+				adifQsoCnt.setText(String.valueOf(size));
+				adifProgress.setMaximum(size);
+				adifProgress.setValue(0);
+				adifProgress.setString("0/" + size);
+			}
+		}
+	}
+
+	private Optional<Adif3> readADI(File file) throws IOException {
+		BufferedReader buffInput = null;
+		try {
+			AdiReader reader = new AdiReader();
+			reader.setQuirksMode(true);
+			buffInput = new BufferedReader(new FileReader(file));
+			return reader.read(buffInput);
+		} finally {
+			try {
+				if (buffInput != null) {
+					buffInput.close();
+				}
+			} catch (IOException ex) {
+				log.error("ERROR", ex);
+			}
+		}
+	}
+
+
+
+	class AddQsoWorker extends SwingWorker<Void, Void> {
 		private final String qso;
+		private final Station station;
 		private String status;
 
-		public AddQsoWorker(String qso) {
+		public AddQsoWorker(String qso, Station station) {
 			this.qso = qso;
+			this.station = station;
 		}
 
 		@Override
 		protected Void doInBackground() throws Exception {
 			log.info("QSO to add: {}", qso);
-			status = service.importQso(settings, 1, qso); //FIXME:
+			status = service.importQso(settings, station.getStationId(), qso); //FIXME:
 			return null;
 		}
 
@@ -399,9 +472,53 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		protected void done() {
 			qsoAdd.setEnabled(true);
 			qsoStatus.setText(status);
+
+			qsoCall.setText("");
+			qsoRstS.setText("59");
+			qsoRstR.setText("59");
+			qsoName.setText("");
+			qsoQth.setText("");
+			qsoComment.setText("");
 		}
 
 
+	}
+
+
+	class AdifImportWorker extends SwingWorker<Void, Adif3Record> {
+		private final List<Adif3Record> qsos;
+		private final Station station;
+
+		public AdifImportWorker(List<Adif3Record> qsos, Station station) {
+			this.qsos = qsos;
+			this.station = station;
+		}
+
+		@Override
+		protected Void doInBackground() throws Exception {
+			log.info("Qso to process: {}", qsos);
+			for (Adif3Record c: qsos) {
+				publish(c);
+				String s = service.importQso(settings, station.getStationId(), c);
+				adifLogs.append(c.getCall() + " " + s);
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void process(List<Adif3Record> chunks) {
+			for (Adif3Record c: chunks) {
+				adifProgress.setValue(adifProgress.getValue()+1);
+				adifProgress.setString(adifProgress.getValue() + "/" + adifProgress.getMaximum());
+			}
+		}
+
+		@Override
+		protected void done() {
+			adifImport.setEnabled(true);
+			adifLogs.append("\nDone.");
+		}
 	}
 
 
