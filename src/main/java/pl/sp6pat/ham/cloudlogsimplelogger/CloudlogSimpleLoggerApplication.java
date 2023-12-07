@@ -2,50 +2,27 @@ package pl.sp6pat.ham.cloudlogsimplelogger;
 
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
-import lombok.SneakyThrows;
-import org.marsik.ham.adif.AdiReader;
-import org.marsik.ham.adif.AdiWriter;
-import org.marsik.ham.adif.Adif3;
-import org.marsik.ham.adif.Adif3Record;
-import org.marsik.ham.adif.enums.Band;
-import org.marsik.ham.adif.enums.Mode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
-import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
-import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
-import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.AdifImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.QsoImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.SettingsPanel;
 
-import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.Optional;
 
 @SpringBootApplication
 public class CloudlogSimpleLoggerApplication extends JFrame  {
 
-	private static Logger log = LoggerFactory.getLogger(CloudlogSimpleLoggerApplication.class);
+	private static final Logger log = LoggerFactory.getLogger(CloudlogSimpleLoggerApplication.class);
 
 	private Settings settings;
 	private final CloudlogIntegrationService service;
