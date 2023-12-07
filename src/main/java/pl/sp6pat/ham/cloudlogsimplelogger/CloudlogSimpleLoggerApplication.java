@@ -20,6 +20,7 @@ import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
+import pl.sp6pat.ham.cloudlogsimplelogger.ui.SettingsPanel;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -46,6 +47,8 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private Settings settings;
 	private CloudlogIntegrationService service;
+
+	private SettingsPanel settingsPanel;
 
 	private List<Adif3Record> adifRecords;
 
@@ -80,12 +83,6 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private final JProgressBar adifProgress = new JProgressBar();
 	private final JTextArea adifLogs  = new JTextArea();
 
-	private final JTextField settCloudlogUrl = new JTextField();
-	private final JTextField settApiKey = new JTextField();
-	private final JTextField settOperator = new JTextField();
-	private final JTextField settQrzLogin = new JTextField();
-	private final JPasswordField settQrzPass = new JPasswordField();
-	private final JButton settSave = new JButton("Save");
 
 
 	public static void main(String[] args) {
@@ -101,10 +98,12 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	public CloudlogSimpleLoggerApplication() {
 		super("Cloudlog Simple Logger");
 
+		initializeComponents();
+
 		loadSettings();
 		service = new CloudlogIntegrationService(settings);
 
-		initializeComponents();
+
 		initializeActions();
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -124,6 +123,8 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private void initializeComponents() {
 
+		settingsPanel = new SettingsPanel();
+
 		qsoStatus.setEditable(false);
 		qsoStatus.setEnabled(false);
 		qsoStatus.setFocusable(false);
@@ -136,7 +137,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 		tab.add("QSO", getQsoPanel());
 		tab.add("Import", getImportPanel());
-		tab.add("Settings", getSettingsPanel());
+		tab.add("Settings", settingsPanel);
 	}
 
 	private void initializeActions() {
@@ -195,18 +196,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 		});
 
-		settSave.addActionListener(e -> {
-			String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).getBytes());
-			Settings settings = Settings.builder()
-					.cloudlogUrl(settCloudlogUrl.getText())
-					.apiKey(settApiKey.getText())
-					.operator(settOperator.getText())
-					.qrzLogin(settQrzLogin.getText())
-					.qrzPass(pass)
-					.build();
-			SettingsManager.save(settings);
-			JOptionPane.showMessageDialog(this, "Saved");
-		});
+
 
 		qsoMode.addItemListener(e -> {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -270,13 +260,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 		if (settingsOpt.isPresent()) {
 			settings = settingsOpt.get();
-			settCloudlogUrl.setText(settings.getCloudlogUrl());
-			settApiKey.setText(settings.getApiKey());
-			settOperator.setText(settings.getOperator());
-			settQrzLogin.setText(settings.getQrzLogin());
-			byte[] decodedBytes = Base64.getDecoder().decode(settings.getQrzPass());
-			String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
-			settQrzPass.setText(decodedString);
+			settingsPanel.fillPanel(settings);
 		}
 	}
 
@@ -382,28 +366,6 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				.add(adifProgress).xyw(1,7,5)
 				.addLabel("Logi:").xy(1, 9)
 				.add(new JScrollPane(adifLogs)).xyw(1, 11, 5)
-				.build();
-	}
-
-	private Component getSettingsPanel() {
-		FormLayout layout = new FormLayout(
-				"p, 3dlu, f:50dlu:g, 3dlu, p",
-				"f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p");
-
-		return FormBuilder.create()
-				.layout(layout)
-				.padding("10dlu, 10dlu, 10dlu, 10dlu")
-				.addLabel("Cloudlog URL:").xy(1, 1)
-				.add(settCloudlogUrl).xy(3, 1)
-				.addLabel("API Key:").xy(1, 3)
-				.add(settApiKey).xy(3, 3)
-				.addLabel("Operator:").xy(1, 5)
-				.add(settOperator).xy(3, 5)
-				.addLabel("QRZ Login:").xy(1, 7)
-				.add(settQrzLogin).xy(3, 7)
-				.addLabel("QRZ Pass:").xy(1, 9)
-				.add(settQrzPass).xy(3, 9)
-				.add(settSave).xy(3,11)
 				.build();
 	}
 
