@@ -3,6 +3,8 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
@@ -12,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class SettingsPanel extends JPanel {
+    private static Logger log = LoggerFactory.getLogger(SettingsPanel.class);
+
     private final JTextField settCloudlogUrl = new JTextField();
     private final JTextField settApiKey = new JTextField();
     private final JTextField settOperator = new JTextField();
