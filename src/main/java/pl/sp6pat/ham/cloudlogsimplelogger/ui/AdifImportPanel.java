@@ -35,7 +35,6 @@ public class AdifImportPanel extends JPanel {
     private final JTextField adifPath = new JTextField();
     private final JButton adifBrowse = new JButton("...");
     private final JLabel adifQsoCnt = new JLabel();
-    private final JLabel adifInvalidQso = new JLabel();
     private final JButton adifImport = new JButton("Import");
     private final JProgressBar adifProgress = new JProgressBar();
     private final JTextArea adifLogs  = new JTextArea();

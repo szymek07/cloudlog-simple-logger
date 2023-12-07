@@ -23,8 +23,9 @@ public class SettingsPanel extends JPanel {
     private final JPasswordField settQrzPass = new JPasswordField();
     private final JButton settSave = new JButton("Save");
 
-    public SettingsPanel() {
+    public SettingsPanel(Settings settings) {
         initializeActions();
+        fillPanel(settings);
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
     }
@@ -66,7 +67,7 @@ public class SettingsPanel extends JPanel {
                 .build();
     }
 
-    public void fillPanel(Settings settings) {
+    private void fillPanel(Settings settings) {
         settCloudlogUrl.setText(settings.getCloudlogUrl());
         settApiKey.setText(settings.getApiKey());
         settOperator.setText(settings.getOperator());
