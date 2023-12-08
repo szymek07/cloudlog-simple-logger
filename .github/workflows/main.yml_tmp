@@ -20,7 +20,7 @@ jobs:
 
     - name: Create Windows Installer
       run: |
-        jpackage --type exe --input build/libs --name MyApplication --main-jar myapplication.jar --main-class pl.sp6pat.ham.cloudlogsimplelogger.CloudlogSimpleLoggerApplication --runtime-image C:\hostedtoolcache\windows\Java_Adopt_jdk\17.0.9-9.1\x64 --win-dir-chooser --win-menu --win-menu-group "MyApplication"
+        jpackage --type exe --input build/libs --name CloudlogSimpleLogger --main-jar myapplication.jar --main-class pl.sp6pat.ham.cloudlogsimplelogger.CloudlogSimpleLoggerApplication --runtime-image C:\hostedtoolcache\windows\Java_Adopt_jdk\17.0.9-9.1\x64 --win-dir-chooser --win-menu --win-menu-group "HAM"
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
