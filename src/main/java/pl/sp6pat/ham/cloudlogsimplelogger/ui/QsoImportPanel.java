@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 public class QsoImportPanel extends ImportPanel {
 
-    private static Logger log = LoggerFactory.getLogger(QsoImportPanel.class);
+    private static final Logger log = LoggerFactory.getLogger(QsoImportPanel.class);
 
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -51,7 +51,7 @@ public class QsoImportPanel extends ImportPanel {
     private final JTextField qsoName = new JTextField();
     private final JTextField qsoQth = new JTextField();
     private final JTextArea qsoComment = new JTextArea();
-    private final JButton qsoAdd = new JButton("Add QSO");;
+    private final JButton qsoAdd = new JButton("Add QSO");
 
     public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
         super(service, settings);
@@ -87,6 +87,12 @@ public class QsoImportPanel extends ImportPanel {
         qsoAdd.addActionListener( e -> {
 
             Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
+            QsoMode qsoModeSelectedItem = (QsoMode) qsoMode.getSelectedItem();
+            QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
+
+            if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null) {
+                return;
+            }
 
             Adif3Record record = new Adif3Record();
 
@@ -100,18 +106,16 @@ public class QsoImportPanel extends ImportPanel {
             record.setQsoDate(LocalDate.parse(qsoDate.getText()));
             record.setTimeOn(LocalTime.parse(qsoTime.getText()));
 
-            QsoMode qsoModeSelectedItem = (QsoMode) qsoMode.getSelectedItem();
             Mode mode = Mode.findByCode(qsoModeSelectedItem.getMode());
             record.setMode(mode);
 
-            QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
             Band band = Band.findByCode(qsoBandSelectedItem.getBand());
             record.setBand(band);
 
             record.setFreq(Long.parseLong(qsoFreq.getText()) / 1000.0);
 
             record.setStationCallsign(stationSelectedItem.getStationCallsign());
-            record.setOperator(settings.getOperator());			;
+            record.setOperator(settings.getOperator());
 
             AdiWriter writer = new AdiWriter();
             writer.append(record);
@@ -258,10 +262,7 @@ public class QsoImportPanel extends ImportPanel {
     }
 
     private ZonedDateTime getGmtDateTime() {
-        ZonedDateTime gmtTime = ZonedDateTime.now(ZoneId.of("GMT"));
-        return gmtTime;
+        return ZonedDateTime.now(ZoneId.of("GMT"));
     }
-
-
 
 }

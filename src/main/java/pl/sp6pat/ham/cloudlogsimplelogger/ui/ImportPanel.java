@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 public abstract class ImportPanel extends JPanel {
 
-    private static Logger log = LoggerFactory.getLogger(ImportPanel.class);
+    private static final Logger log = LoggerFactory.getLogger(ImportPanel.class);
 
     protected final CloudlogIntegrationService service;
     protected final Settings settings;
@@ -31,9 +31,9 @@ public abstract class ImportPanel extends JPanel {
     }
 
     protected void fillComboBoxes() {
-        SwingWorker<List<Station>, Void> worker = new SwingWorker<List<Station>, Void>() {
+        SwingWorker<List<Station>, Void> worker = new SwingWorker<>() {
             @Override
-            protected List<Station> doInBackground() throws Exception {
+            protected List<Station> doInBackground() {
                 return service.getStations();
             }
 

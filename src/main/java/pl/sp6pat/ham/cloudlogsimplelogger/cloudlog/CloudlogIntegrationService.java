@@ -20,7 +20,7 @@ import java.util.List;
 
 public class CloudlogIntegrationService {
 
-    private static Logger log = LoggerFactory.getLogger(CloudlogIntegrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(CloudlogIntegrationService.class);
 
     private final Settings settings;
 
@@ -93,6 +93,10 @@ public class CloudlogIntegrationService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
+
+        if (result == null) {
+            return "QSO Not added";
+        }
 
         Pattern pattern = Pattern.compile("Message: (.+?)</p>");
         Matcher matcher = pattern.matcher(result);
