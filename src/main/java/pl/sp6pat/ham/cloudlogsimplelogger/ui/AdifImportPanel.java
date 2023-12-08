@@ -36,7 +36,7 @@ public class AdifImportPanel extends ImportPanel {
     private final JLabel adifQsoCnt = new JLabel();
     private final JButton adifImport = new JButton("Import");
     private final JProgressBar adifProgress = new JProgressBar();
-    private final JTextArea adifLogs  = new JTextArea();
+
 
     public AdifImportPanel(CloudlogIntegrationService service, Settings settings) {
         super(service, settings);
@@ -49,21 +49,23 @@ public class AdifImportPanel extends ImportPanel {
 
     private void initializeComponents() {
         adifProgress.setStringPainted(true);
-        adifLogs.setEditable(false);
-        adifLogs.setLineWrap(true);
+
     }
 
     private void initializeActions() {
         adifBrowse.addActionListener(e -> SwingUtilities.invokeLater(this::browseBtAction));
 
         adifImport.addActionListener(e -> {
-            adifImport.setEnabled(false);
-            adifLogs.setText("");
+
 
             Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
 
-            AdifImportWorker worker = new AdifImportWorker(adifRecords, stationSelectedItem);
-            worker.execute();
+            if (stationSelectedItem != null & adifRecords != null) {
+                adifImport.setEnabled(false);
+                appLogs.setText("");
+                AdifImportWorker worker = new AdifImportWorker(adifRecords, stationSelectedItem);
+                worker.execute();
+            }
 
         });
     }
@@ -88,7 +90,7 @@ public class AdifImportPanel extends ImportPanel {
                 .add(adifImport).xyw(1, 7, 5)
                 .add(adifProgress).xyw(1,9,5)
                 .addLabel("Logi:").xy(1, 11)
-                .add(new JScrollPane(adifLogs)).xyw(1, 13, 5)
+                .add(new JScrollPane(appLogs)).xyw(1, 13, 5)
                 .build();
     }
 
@@ -140,7 +142,7 @@ public class AdifImportPanel extends ImportPanel {
         private boolean hasErrors = false;
 
         public AdifImportWorker(List<Adif3Record> qsos, Station station) {
-            adifLogs.setText("QSO to import: " + qsos.size() + "\n");
+            appLogs.setText("QSO to import: " + qsos.size() + "\n");
             this.qsos = qsos;
             this.station = station;
         }
@@ -161,7 +163,7 @@ public class AdifImportPanel extends ImportPanel {
                 } catch (Exception e) {
                     log.error("Error: ", e);
                     hasErrors = true;
-                    adifLogs.append("Error: " + e.getMessage() + "\n");
+                    appLogs.append("Error: " + e.getMessage() + "\n");
                     throw e;
                 }
             }
@@ -182,14 +184,14 @@ public class AdifImportPanel extends ImportPanel {
     }
 
     private void markQsoImported(Adif3Record c) {
-        adifLogs.append("QSO " + c.getCall() + " imported.\n");
+        appLogs.append("QSO " + c.getCall() + " imported.\n");
         adifProgress.setValue(adifProgress.getValue() + 1);
         adifProgress.setString(adifProgress.getValue() + "/" + adifProgress.getMaximum());
     }
 
     private void resetUi(boolean hasErrors) {
         adifImport.setEnabled(true);
-        adifLogs.append(hasErrors? "Break!\n" : "Done.\n");
+        appLogs.append(hasErrors? "Break!\n" : "Done.\n");
         adifPath.setText("");
         adifQsoCnt.setText("");
         adifProgress.setValue(0);

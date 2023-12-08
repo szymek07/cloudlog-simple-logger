@@ -20,10 +20,14 @@ public abstract class ImportPanel extends JPanel {
     protected final Settings settings;
 
     protected final JComboBox<Station> cloudlogStation = new JComboBox<>();
+    protected final JTextArea appLogs  = new JTextArea();
 
     public ImportPanel(CloudlogIntegrationService service, Settings settings) {
         this.service = service;
         this.settings = settings;
+
+        appLogs.setEditable(false);
+        appLogs.setLineWrap(true);
     }
 
     protected void fillComboBoxes() {
@@ -43,8 +47,7 @@ public abstract class ImportPanel extends JPanel {
                     Optional<Station> activeStation = data.stream().filter(e -> e.getStationActive() > 0).findFirst();
                     activeStation.ifPresent(cloudlogStation::setSelectedItem);
                 } catch (InterruptedException | ExecutionException e) {
-                    //FIXME:
-                    //qsoStatus.setText("Cloudlog error: " + e.getMessage());
+                    appLogs.setText("Cloudlog error: " + e.getMessage());
                 }
             }
         };

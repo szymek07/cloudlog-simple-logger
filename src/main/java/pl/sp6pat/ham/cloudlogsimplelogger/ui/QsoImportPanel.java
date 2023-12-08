@@ -40,7 +40,6 @@ public class QsoImportPanel extends ImportPanel {
 
     private Timer timer;
     private final JCheckBox qsoOffline = new JCheckBox("Offline");
-//    private final JComboBox<Station> qsoStation = new JComboBox<>();
     private final JFormattedTextField qsoDate = new JFormattedTextField(dateFormat);
     private final JFormattedTextField qsoTime = new JFormattedTextField(timeFormat);
     private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
@@ -52,7 +51,6 @@ public class QsoImportPanel extends ImportPanel {
     private final JTextField qsoName = new JTextField();
     private final JTextField qsoQth = new JTextField();
     private final JTextArea qsoComment = new JTextArea();
-    private final JTextArea qsoStatus = new JTextArea();
     private final JButton qsoAdd = new JButton("Add QSO");;
 
     public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
@@ -65,9 +63,6 @@ public class QsoImportPanel extends ImportPanel {
     }
 
     private void initializeComponents() {
-        qsoStatus.setEditable(false);
-        qsoStatus.setFocusable(false);
-        qsoStatus.setLineWrap(true);
         qsoDate.setEditable(false);
         qsoTime.setEditable(false);
     }
@@ -122,7 +117,7 @@ public class QsoImportPanel extends ImportPanel {
             writer.append(record);
 
             qsoAdd.setEnabled(false);
-            qsoStatus.setText("");
+            appLogs.setText("");
             AddQsoWorker worker = new AddQsoWorker(writer.toString(), stationSelectedItem);
             worker.execute();
 
@@ -198,7 +193,7 @@ public class QsoImportPanel extends ImportPanel {
 
                 .add(qsoAdd).xyw(1, 27, 3)
                 .addLabel("Status:"). xy(1,29)
-                .add(new JScrollPane(qsoStatus)).xy(3, 29)
+                .add(new JScrollPane(appLogs)).xy(3, 29)
                 .build();
     }
 
@@ -249,7 +244,7 @@ public class QsoImportPanel extends ImportPanel {
         @Override
         protected void done() {
             qsoAdd.setEnabled(true);
-            qsoStatus.setText(status);
+            appLogs.setText(status);
 
             qsoCall.setText("");
             qsoRstS.setText("59");
