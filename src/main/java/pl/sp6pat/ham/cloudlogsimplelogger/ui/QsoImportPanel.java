@@ -3,7 +3,6 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import lombok.SneakyThrows;
 import org.marsik.ham.adif.AdiWriter;
 import org.marsik.ham.adif.Adif3Record;
 import org.marsik.ham.adif.enums.Band;
@@ -27,15 +26,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
-public class QsoImportPanel extends JPanel {
+public class QsoImportPanel extends ImportPanel {
 
     private static Logger log = LoggerFactory.getLogger(QsoImportPanel.class);
-    private final CloudlogIntegrationService service;
-    private final Settings settings;
+
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
@@ -45,7 +40,7 @@ public class QsoImportPanel extends JPanel {
 
     private Timer timer;
     private final JCheckBox qsoOffline = new JCheckBox("Offline");
-    private final JComboBox<Station> qsoStation = new JComboBox<>();
+//    private final JComboBox<Station> qsoStation = new JComboBox<>();
     private final JFormattedTextField qsoDate = new JFormattedTextField(dateFormat);
     private final JFormattedTextField qsoTime = new JFormattedTextField(timeFormat);
     private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
@@ -61,8 +56,7 @@ public class QsoImportPanel extends JPanel {
     private final JButton qsoAdd = new JButton("Add QSO");;
 
     public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
-        this.service = service;
-        this.settings = settings;
+        super(service, settings);
         initializeComponents();
         initializeActions();
         fillComboBoxes();
@@ -72,8 +66,8 @@ public class QsoImportPanel extends JPanel {
 
     private void initializeComponents() {
         qsoStatus.setEditable(false);
-        qsoStatus.setEnabled(false);
         qsoStatus.setFocusable(false);
+        qsoStatus.setLineWrap(true);
         qsoDate.setEditable(false);
         qsoTime.setEditable(false);
     }
@@ -97,7 +91,7 @@ public class QsoImportPanel extends JPanel {
 
         qsoAdd.addActionListener( e -> {
 
-            Station stationSelectedItem = (Station) qsoStation.getSelectedItem();
+            Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
 
             Adif3Record record = new Adif3Record();
 
@@ -138,14 +132,12 @@ public class QsoImportPanel extends JPanel {
 
         qsoMode.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                System.out.println("Wybrany element: " + e.getItem());
                 determineFreq();
             }
         });
 
         qsoBand.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                System.out.println("Wybrany element: " + e.getItem());
                 determineFreq();
             }
         });
@@ -153,25 +145,10 @@ public class QsoImportPanel extends JPanel {
         createTimer();
     }
 
-    private void fillComboBoxes() {
-        SwingWorker<List<Station>, Void> worker = new SwingWorker<List<Station>, Void>() {
-            @Override
-            protected List<Station> doInBackground() throws Exception {
-                return service.getStations();
-            }
+    protected void fillComboBoxes() {
+       super.fillComboBoxes();
 
-            @SneakyThrows
-            @Override
-            protected void done() {
-                List<Station> data = get();
-                for (Station item : data) {
-                    qsoStation.addItem(item);
-                }
-                Optional<Station> activeStation = data.stream().filter(e -> e.getStationActive() > 0).findFirst();
-                activeStation.ifPresent(qsoStation::setSelectedItem);
-            }
-        };
-        worker.execute();
+
 
         Arrays.stream(QsoMode.values()).forEach(qsoMode::addItem);
         qsoMode.setSelectedItem(QsoMode.SSB);
@@ -193,7 +170,7 @@ public class QsoImportPanel extends JPanel {
                 .padding("10dlu, 10dlu, 10dlu, 10dlu")
                 .add(qsoOffline).xyw(1, 1, 3)
                 .addLabel("Station:").xy(1,3)
-                .add(qsoStation).xy(3,3)
+                .add(cloudlogStation).xy(3,3)
 
                 .addLabel("Call:").xy(1,5)
                 .add(qsoCall).xy(3,5)

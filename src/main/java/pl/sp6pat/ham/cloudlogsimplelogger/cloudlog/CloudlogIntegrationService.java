@@ -2,26 +2,20 @@ package pl.sp6pat.ham.cloudlogsimplelogger.cloudlog;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.marsik.ham.adif.AdiWriter;
 import org.marsik.ham.adif.Adif3Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
 import org.springframework.http.codec.xml.Jaxb2XmlEncoder;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.yaml.snakeyaml.Yaml;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.io.File;
 import java.util.List;
 
 public class CloudlogIntegrationService {
@@ -35,6 +29,7 @@ public class CloudlogIntegrationService {
     public CloudlogIntegrationService(Settings settings) {
         this.settings = settings;
 
+        //FIME: tylko do QRZ
         ExchangeStrategies strategies = ExchangeStrategies
                 .builder()
                 .codecs(clientDefaultCodecsConfigurer -> {
@@ -67,7 +62,7 @@ public class CloudlogIntegrationService {
                 .string(qso)
                 .build();
 
-        return getString(qsoRequest);
+        return uploadToCloudlog(qsoRequest);
     }
 
     public String importQso(Settings setting, String stationId, Adif3Record qso) throws JsonProcessingException {
@@ -82,10 +77,10 @@ public class CloudlogIntegrationService {
                 .string(writer.toString())
                 .build();
 
-        return getString(qsoRequest);
+        return uploadToCloudlog(qsoRequest);
     }
 
-    private String getString(Qso qsoRequest) throws JsonProcessingException {
+    private String uploadToCloudlog(Qso qsoRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         String body = objectMapper.writeValueAsString(qsoRequest) ;
 
