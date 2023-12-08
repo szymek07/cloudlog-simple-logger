@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class SettingsPanel extends JPanel {
-    private static Logger log = LoggerFactory.getLogger(SettingsPanel.class);
+    private final static Logger log = LoggerFactory.getLogger(SettingsPanel.class);
 
     private final JTextField settCloudlogUrl = new JTextField();
     private final JTextField settApiKey = new JTextField();
@@ -68,6 +68,10 @@ public class SettingsPanel extends JPanel {
     }
 
     private void fillPanel(Settings settings) {
+        if (settings == null) {
+            log.warn("Settings not found");
+            return;
+        }
         settCloudlogUrl.setText(settings.getCloudlogUrl());
         settApiKey.setText(settings.getApiKey());
         settOperator.setText(settings.getOperator());

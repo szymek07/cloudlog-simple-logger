@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public class SettingsManager {
 
-    private static Logger log = LoggerFactory.getLogger(SettingsManager.class);
+    private static final Logger log = LoggerFactory.getLogger(SettingsManager.class);
 
     public static void save(Settings settings) {
 
@@ -36,13 +36,16 @@ public class SettingsManager {
         loaderOptions.setTagInspector(taginspector);
 
         File yamlFile = getConfigFile();
-        Yaml yaml = new Yaml(new Constructor(Settings.class, loaderOptions));
-        try (FileReader reader = new FileReader(yamlFile)) {
-            return Optional.ofNullable(yaml.load(reader));
-        } catch (IOException e) {
-            log.error("Load settings error", e);
-            throw new RuntimeException("Load settings error", e);
+        if (yamlFile.exists()) {
+            Yaml yaml = new Yaml(new Constructor(Settings.class, loaderOptions));
+            try (FileReader reader = new FileReader(yamlFile)) {
+                return Optional.ofNullable(yaml.load(reader));
+            } catch (IOException e) {
+                log.error("Load settings error", e);
+                throw new RuntimeException("Load settings error", e);
+            }
         }
+        return Optional.empty();
     }
 
     private static File getConfigFile() {
@@ -54,8 +57,7 @@ public class SettingsManager {
             directory.mkdirs();
         }
 
-        File yamlFile = new File(directory, "cloudlog_simple_logger_settings.yaml");
-        return yamlFile;
+        return new File(directory, "cloudlog_simple_logger_settings.yaml");
     }
 
 }

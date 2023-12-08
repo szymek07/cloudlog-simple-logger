@@ -52,10 +52,10 @@ public abstract class ImportPanel extends JPanel {
             }
         };
 
-        if (StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
+        if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
             worker.execute();
         } else {
-            log.warn("Settings no found.");
+            log.warn("Settings not found.");
         }
 
 

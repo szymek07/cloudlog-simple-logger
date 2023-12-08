@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
 import org.springframework.http.codec.xml.Jaxb2XmlEncoder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
@@ -24,12 +25,12 @@ public class CloudlogIntegrationService {
 
     private final Settings settings;
 
-    private final WebClient webClient;
+    private WebClient webClient;
 
     public CloudlogIntegrationService(Settings settings) {
         this.settings = settings;
 
-        //FIME: tylko do QRZ
+        //FIXME: tylko do QRZ
         ExchangeStrategies strategies = ExchangeStrategies
                 .builder()
                 .codecs(clientDefaultCodecsConfigurer -> {
@@ -38,10 +39,12 @@ public class CloudlogIntegrationService {
                 })
                 .build();
 
-        webClient =  WebClient.builder()
-                .exchangeStrategies(strategies)
-                .baseUrl(settings.getCloudlogUrl())
-                .build();
+        if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
+            webClient = WebClient.builder()
+                    .exchangeStrategies(strategies)
+                    .baseUrl(settings.getCloudlogUrl())
+                    .build();
+        }
     }
     public List<Station> getStations() {
         return webClient.get()
