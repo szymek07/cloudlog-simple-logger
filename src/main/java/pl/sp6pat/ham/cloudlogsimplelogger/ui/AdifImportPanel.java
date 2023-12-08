@@ -57,7 +57,6 @@ public class AdifImportPanel extends ImportPanel {
 
         adifImport.addActionListener(e -> {
 
-
             Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
 
             if (stationSelectedItem != null & adifRecords != null) {
