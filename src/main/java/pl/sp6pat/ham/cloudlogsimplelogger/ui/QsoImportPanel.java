@@ -9,6 +9,7 @@ import org.marsik.ham.adif.enums.Band;
 import org.marsik.ham.adif.enums.Mode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
@@ -90,7 +91,7 @@ public class QsoImportPanel extends ImportPanel {
             QsoMode qsoModeSelectedItem = (QsoMode) qsoMode.getSelectedItem();
             QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
 
-            if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null) {
+            if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null || !StringUtils.hasText(qsoCall.getText())) {
                 return;
             }
 
