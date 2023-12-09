@@ -8,10 +8,10 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -20,13 +20,18 @@ jobs:
       run: mvn package
 
     - name: Create Windows Installer
-      run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d release/.
+      run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+
+    - id: ls-files
+      name: ls files
+      run: |
+        ls -alR
 
     - id: upload-installer
       name: Upload installer
       uses: actions/upload-artifact@v3
       with:
-        path: release/cloudlogsimplelogger_1.0_amd64.msi
+        path: target/cloudlogsimplelogger_1.0_amd64.msi
         name: windows-installer
         retention-days: 1
 
@@ -35,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -47,13 +52,18 @@ jobs:
         run: mvn package
 
       - name: Create Linux Installer
-        run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d release/.
+        run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+
+      - id: ls-files
+        name: ls files
+        run: |
+          ls -alR
 
       - id: upload-installer
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: release/cloudlogsimplelogger_1.0_amd64.deb
+          path: target/cloudlogsimplelogger_1.0_amd64.deb
           name: linux-installer
           retention-days: 1
 
