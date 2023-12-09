@@ -25,13 +25,13 @@ jobs:
     - id: ls-files
       name: ls files
       run: |
-        ls -alR
+        dir target
 
     - id: upload-installer
       name: Upload installer
       uses: actions/upload-artifact@v3
       with:
-        path: target/cloudlogsimplelogger_1.0_amd64.msi
+        path: target/cloudlogsimplelogger_1.0-1_amd64.msi
         name: windows-installer
         retention-days: 1
 
@@ -57,13 +57,13 @@ jobs:
       - id: ls-files
         name: ls files
         run: |
-          ls -alR
+          ls -alR target
 
       - id: upload-installer
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: target/cloudlogsimplelogger_1.0_amd64.deb
+          path: target/cloudlogsimplelogger_1.0-1_amd64.deb
           name: linux-installer
           retention-days: 1
 
@@ -89,9 +89,9 @@ jobs:
       - id: rename-downloaded-files
         name: Rename downloaded files
         run: |
-          ls -alR
-          mv cloudlogsimplelogger_1.0_amd64.deb cloudlogsimplelogger_1.0.deb
-          mv cloudlogsimplelogger_1.0_amd64.msi cloudlogsimplelogger_1.0.msi
+          ls -al 
+          mv cloudlogsimplelogger_1.0-1_amd64.deb cloudlogsimplelogger_1.0.deb
+          mv cloudlogsimplelogger_1.0-1_amd64.msi cloudlogsimplelogger_1.0.msi
           ls -alR
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
