@@ -27,12 +27,12 @@ jobs:
       run: |
         dir target
 
-    - id: cp-files-to-release
-      name: Copy installer to release and commit/push
-      run: |
-        git add release/*
-        git commit -m "release"
-        git push
+#    - id: cp-files-to-release
+#      name: Copy installer to release and commit/push
+#      run: |
+#        git add release/*
+#        git commit -m "release"
+#        git push
 
     - id: upload-installer
       name: Upload installer
@@ -66,12 +66,12 @@ jobs:
         run: |
           ls -alR target
 
-      - id: cp-files-to-release
-        name: Copy installer to release and commit/push
-        run: |
-          git add release/*
-          git commit -m "release"
-          git push
+#      - id: cp-files-to-release
+#        name: Copy installer to release and commit/push
+#        run: |
+#          git add release/*
+#          git commit -m "release"
+#          git push
 
       - id: upload-installer
         name: Upload installer
