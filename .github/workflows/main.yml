@@ -27,13 +27,6 @@ jobs:
       run: |
         dir target
 
-#    - id: cp-files-to-release
-#      name: Copy installer to release and commit/push
-#      run: |
-#        git add release/*
-#        git commit -m "release"
-#        git push
-
     - id: upload-installer
       name: Upload installer
       uses: actions/upload-artifact@v3
@@ -64,14 +57,7 @@ jobs:
       - id: ls-files
         name: List files
         run: |
-          ls -alR target
-
-#      - id: cp-files-to-release
-#        name: Copy installer to release and commit/push
-#        run: |
-#          git add release/*
-#          git commit -m "release"
-#          git push
+          ls -al target
 
       - id: upload-installer
         name: Upload installer
