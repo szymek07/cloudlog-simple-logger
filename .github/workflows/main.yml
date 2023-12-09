@@ -1,0 +1,28 @@
+name: Build Windows Installer
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Build with Gradle/Maven
+      run: mvn package
+
+    - name: Create Windows Installer
+      run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d release/.
+    
+#    - name: Upload Artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: windows-installer
+#        path: path/to/MyApplication.exe

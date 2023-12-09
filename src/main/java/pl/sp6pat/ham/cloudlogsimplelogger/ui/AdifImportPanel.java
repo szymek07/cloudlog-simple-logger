@@ -148,12 +148,10 @@ public class AdifImportPanel extends ImportPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            log.info("Qso to process: {}", qsos);
             for (Adif3Record c: qsos) {
                 try {
 
                     if (StringUtils.hasText(settings.getOperator())) {
-                        log.warn("Setting operator to: " + settings.getOperator());
                         c.setOperator(settings.getOperator());
                     }
                     String s = service.importQso(settings, station.getStationId(), c);
