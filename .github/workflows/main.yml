@@ -23,9 +23,16 @@ jobs:
       run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
 
     - id: ls-files
-      name: ls files
+      name: List files
       run: |
         dir target
+
+    - id: cp-files-to-release
+      name: Copy installer to release and commit/push
+      run: |
+        git add release/*
+        git commit -m "release"
+        git push
 
     - id: upload-installer
       name: Upload installer
@@ -55,9 +62,16 @@ jobs:
         run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
 
       - id: ls-files
-        name: ls files
+        name: List files
         run: |
           ls -alR target
+
+      - id: cp-files-to-release
+        name: Copy installer to release and commit/push
+        run: |
+          git add release/*
+          git commit -m "release"
+          git push
 
       - id: upload-installer
         name: Upload installer
