@@ -1,9 +1,10 @@
-name: Build Windows Installer
+name: Build Installers
 
 on: [push, pull_request]
 
 jobs:
-  build:
+  build-windows-installer:
+    name: Build Installer on Windows
     runs-on: windows-latest
     steps:
     - name: Checkout repository
@@ -15,14 +16,112 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     
-    - name: Build with Gradle/Maven
+    - name: Build with Maven
       run: mvn package
 
     - name: Create Windows Installer
       run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d release/.
-    
-#    - name: Upload Artifact
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: windows-installer
-#        path: path/to/MyApplication.exe
+
+    - id: upload-installer
+      name: Upload installer
+      uses: actions/upload-artifact@v3
+      with:
+        path: release/cloudlogsimplelogger_1.0_amd64.msi
+        name: windows-installer
+        retention-days: 1
+
+  build-linux-installer:
+    name: Build Installer on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn package
+
+      - name: Create Linux Installer
+        run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d release/.
+
+      - id: upload-installer
+        name: Upload installer
+        uses: actions/upload-artifact@v3
+        with:
+          path: release/cloudlogsimplelogger_1.0_amd64.deb
+          name: linux-installer
+          retention-days: 1
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-linux-installer, build-windows-installer]
+    steps:
+
+      # DOWNLOAD INSTALLERS
+      - id: download-linux-installer
+        name: Download Linux installer
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-installer
+
+      - id: download-windows-installer
+        name: Download Windows installer
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-installer
+
+      - id: rename-downloaded-files
+        name: Rename downloaded files
+        run: |
+          ls -alR
+          mv cloudlogsimplelogger_1.0_amd64.deb cloudlogsimplelogger_1.0.deb
+          mv cloudlogsimplelogger_1.0_amd64.msi cloudlogsimplelogger_1.0.msi
+          ls -alR
+
+      # CREATE GITHUB RELEASE AND ADD ASSETS
+      - id: tag
+        name: Move example-release tag
+        shell: bash
+        if: false
+        run: |
+          # Move tag
+          git tag -d example-release
+          git push --delete origin example-release
+          git tag -a example-release -m "Example of a Release"
+          git push --follow-tags
+      - id: create-release
+        name: Create GitHub release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: example-release
+          release_name: example-release
+          draft: false
+          prerelease: false
+      - id: release-linux-installer
+        name: Release Linux installer
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: cloudlogsimplelogger_1.0.deb
+          asset_name: cloudlogsimplelogger_1.0.deb
+          asset_content_type: application/x-binary
+      - id: release-windows-installer
+        name: Release Windows installer
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: cloudlogsimplelogger_1.0.msi
+          asset_name: cloudlogsimplelogger_1.0.msi
+          asset_content_type: application/x-binary
