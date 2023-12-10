@@ -24,9 +24,10 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	private static final Logger log = LoggerFactory.getLogger(CloudlogSimpleLoggerApplication.class);
 
+	public final static String PRG_NAME = "cloudlog-simple-logger";
+
 	private Settings settings;
 	private final CloudlogIntegrationService service;
-
 
 	private final JTabbedPane tab = new JTabbedPane();
 
@@ -45,13 +46,11 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		super("Cloudlog Simple Logger");
 		loadSettings();
 		service = new CloudlogIntegrationService(settings);
-
 		initializeComponents();
-
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setContentPane(getMainPanel());
-		setLocationRelativeTo(null);
 		pack();
+		setLocationRelativeTo(null);
 
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override

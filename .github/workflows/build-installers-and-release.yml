@@ -20,7 +20,7 @@ jobs:
       run: mvn package
 
     - name: Create Windows Installer
-      run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+      run: jpackage --type exe --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
 
     - id: ls-files
       name: List files
@@ -31,7 +31,7 @@ jobs:
       name: Upload installer
       uses: actions/upload-artifact@v3
       with:
-        path: target/CloudlogSimpleLogger-1.0.exe
+        path: target/CloudlogSimpleLogger-1.1.exe
         name: windows-installer
         retention-days: 1
 
@@ -52,7 +52,7 @@ jobs:
         run: mvn package
 
       - name: Create Windows Installer
-        run: jpackage --type msi --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+        run: jpackage --type msi --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
 
       - id: ls-files
         name: List files
@@ -63,7 +63,7 @@ jobs:
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: target/CloudlogSimpleLogger-1.0.msi
+          path: target/CloudlogSimpleLogger-1.1.msi
           name: windows-installer-msi
           retention-days: 1
 
@@ -84,7 +84,7 @@ jobs:
         run: mvn package
 
       - name: Create Linux Installer
-        run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+        run: jpackage --type deb --input target/. --name CloudlogSimpleLogger --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
 
       - id: ls-files
         name: List files
@@ -95,7 +95,7 @@ jobs:
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: target/cloudlogsimplelogger_1.0-1_amd64.deb
+          path: target/cloudlogsimplelogger_1.1-1_amd64.deb
           name: linux-installer
           retention-days: 1
 
@@ -129,9 +129,9 @@ jobs:
         name: Rename downloaded files
         run: |
           ls -al 
-          mv cloudlogsimplelogger_1.0-1_amd64.deb cloudlogsimplelogger_1.0.deb
-          mv CloudlogSimpleLogger-1.0.exe cloudlogsimplelogger-1.0.exe
-          mv CloudlogSimpleLogger-1.0.msi cloudlogsimplelogger-1.0.msi
+          mv cloudlogsimplelogger_1.1-1_amd64.deb cloudlogsimplelogger_1.1.deb
+          mv CloudlogSimpleLogger-1.1.exe cloudlogsimplelogger-1.1.exe
+          mv CloudlogSimpleLogger-1.1.msi cloudlogsimplelogger-1.1.msi
           ls -alR
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
@@ -141,9 +141,9 @@ jobs:
         if: false
         run: |
           # Move tag
-          git tag -d 1.0.0
-          git push --delete origin 1.0.0
-          git tag -a 1.0.0 -m "First release 1.0.0"
+          git tag -d 1.1.0
+          git push --delete origin 1.1.0
+          git tag -a 1.0.0 -m "First release 1.1.0"
           git push --follow-tags
 
       - id: create-release
@@ -152,8 +152,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: 1.0.0
-          release_name: 1.0.0
+          tag_name: 1.1.0
+          release_name: 1.1.0
           draft: false
           prerelease: false
 
@@ -164,8 +164,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: cloudlogsimplelogger_1.0.deb
-          asset_name: cloudlogsimplelogger_1.0.deb
+          asset_path: cloudlogsimplelogger_1.1.deb
+          asset_name: cloudlogsimplelogger_1.1.deb
           asset_content_type: application/x-binary
 
       - id: release-windows-installer-exe
@@ -175,8 +175,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: cloudlogsimplelogger-1.0.exe
-          asset_name: cloudlogsimplelogger-1.0.exe
+          asset_path: cloudlogsimplelogger-1.1.exe
+          asset_name: cloudlogsimplelogger-1.1.exe
           asset_content_type: application/x-binary
 
       - id: release-windows-installer-msi
@@ -186,6 +186,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: cloudlogsimplelogger-1.0.msi
-          asset_name: cloudlogsimplelogger-1.0.msi
+          asset_path: cloudlogsimplelogger-1.1.msi
+          asset_name: cloudlogsimplelogger-1.1.msi
           asset_content_type: application/x-binary

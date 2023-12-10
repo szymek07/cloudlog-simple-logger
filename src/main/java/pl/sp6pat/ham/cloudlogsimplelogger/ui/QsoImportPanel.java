@@ -12,41 +12,50 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
+import pl.sp6pat.ham.cloudlogsimplelogger.qrz.QRZSearchResult;
+import pl.sp6pat.ham.cloudlogsimplelogger.qrz.QRZService;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 
 import javax.swing.*;
+import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.text.SimpleDateFormat;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Optional;
 
 public class QsoImportPanel extends ImportPanel {
 
     private static final Logger log = LoggerFactory.getLogger(QsoImportPanel.class);
 
-
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private final Optional<QRZService> qrzService;
 
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-
+    private DefaultFormatterFactory timeFormatterFactoryWithSeconds;
+    private DefaultFormatterFactory timeFormatterFactory;
+    private DefaultFormatterFactory dateFormatterFactory;
     private Timer timer;
     private final JCheckBox qsoOffline = new JCheckBox("Offline");
-    private final JFormattedTextField qsoDate = new JFormattedTextField(dateFormat);
-    private final JFormattedTextField qsoTime = new JFormattedTextField(timeFormat);
+    private final JFormattedTextField qsoDate;
+    private final JFormattedTextField qsoTime;
     private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
     private final JComboBox<QsoBand> qsoBand = new JComboBox<>();
     private final JTextField qsoFreq = new JTextField();
     private final JTextField qsoCall = new JTextField();
+    private final JButton qsoLookup = new JButton();
     private final JTextField qsoRstS = new JTextField("59");
     private final JTextField qsoRstR = new JTextField("59");
     private final JTextField qsoName = new JTextField();
@@ -56,14 +65,50 @@ public class QsoImportPanel extends ImportPanel {
 
     public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
         super(service, settings);
+
+        setupDateTimeFormatters();
+
+        qsoDate = new JFormattedTextField();
+        qsoDate.setFormatterFactory(dateFormatterFactory);
+        qsoTime = new JFormattedTextField();
+        qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
+
+        if (StringUtils.hasText(settings.getQrzLogin()) && StringUtils.hasText(settings.getQrzPass())) {
+            log.info("Creating QRZ service");
+            byte[] decodedBytes = Base64.getDecoder().decode(settings.getQrzPass());
+            String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+            qrzService = Optional.of(new QRZService(settings.getQrzLogin(), decodedString));
+        } else {
+            log.info("Qrz service not set");
+            qrzService = Optional.empty();
+        }
+
         initializeComponents();
         initializeActions();
         fillComboBoxes();
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
+
+    }
+
+    private void setupDateTimeFormatters() {
+        try {
+            MaskFormatter dateFormatterMask = new MaskFormatter("####-##-##");
+            dateFormatterFactory = new DefaultFormatterFactory(dateFormatterMask);
+            dateFormatterMask.setPlaceholderCharacter('_');
+            MaskFormatter timeFormatterMask = new MaskFormatter("##:##");
+            timeFormatterMask.setPlaceholderCharacter('_');
+            MaskFormatter timeFormatterMaskWithSeconds = new MaskFormatter("##:##:##");
+
+            timeFormatterFactoryWithSeconds = new DefaultFormatterFactory(timeFormatterMaskWithSeconds);
+            timeFormatterFactory = new DefaultFormatterFactory(timeFormatterMask);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void initializeComponents() {
+        qsoLookup.setText("QRZ");
         qsoDate.setEditable(false);
         qsoTime.setEditable(false);
     }
@@ -71,27 +116,37 @@ public class QsoImportPanel extends ImportPanel {
     private void initializeActions() {
         qsoOffline.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
+                qsoTime.setFormatterFactory(timeFormatterFactory);
                 qsoDate.setEditable(true);
                 qsoDate.setText("");
                 qsoTime.setEditable(true);
                 qsoTime.setText("");
                 timer.stop();
             } else {
+                qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
                 qsoDate.setEditable(false);
                 qsoTime.setEditable(false);
                 timer.start();
             }
         });
 
-
+        qsoLookup.addActionListener(e -> {
+            String call = qsoCall.getText();
+            if (StringUtils.hasText(call)) {
+                qsoLookup.setEnabled(false);
+                QrzLookupWorker worker = new QrzLookupWorker(call);
+                worker.execute();
+            }
+        });
 
         qsoAdd.addActionListener( e -> {
-
             Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
             QsoMode qsoModeSelectedItem = (QsoMode) qsoMode.getSelectedItem();
             QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
+            Optional<LocalDate> parsedDate = getParsedDate();
+            Optional<LocalTime> parsedTime = getParsedTime();
 
-            if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null || !StringUtils.hasText(qsoCall.getText())) {
+            if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null || !StringUtils.hasText(qsoCall.getText()) || parsedDate.isEmpty() || parsedTime.isEmpty()) {
                 return;
             }
 
@@ -104,8 +159,8 @@ public class QsoImportPanel extends ImportPanel {
             record.setQth(qsoQth.getText());
             record.setComment(qsoComment.getText());
 
-            record.setQsoDate(LocalDate.parse(qsoDate.getText()));
-            record.setTimeOn(LocalTime.parse(qsoTime.getText()));
+            record.setQsoDate(parsedDate.get());
+            record.setTimeOn(parsedTime.get());
 
             Mode mode = Mode.findByCode(qsoModeSelectedItem.getMode());
             record.setMode(mode);
@@ -128,8 +183,6 @@ public class QsoImportPanel extends ImportPanel {
 
         });
 
-
-
         qsoMode.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 determineFreq();
@@ -145,16 +198,44 @@ public class QsoImportPanel extends ImportPanel {
         createTimer();
     }
 
+    private Optional<LocalDate> getParsedDate() {
+        try {
+            LocalDate parsed = LocalDate.parse(qsoDate.getText());
+            return Optional.of(parsed);
+        } catch (DateTimeParseException e) {
+            appLogs.setText(e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private Optional<LocalTime> getParsedTime() {
+        try {
+            LocalTime parsed = LocalTime.parse(qsoTime.getText());
+            return Optional.of(parsed);
+        } catch (DateTimeParseException e) {
+            appLogs.setText(e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     protected void fillComboBoxes() {
        super.fillComboBoxes();
-
-
 
         Arrays.stream(QsoMode.values()).forEach(qsoMode::addItem);
         qsoMode.setSelectedItem(QsoMode.SSB);
 
         Arrays.stream(QsoBand.values()).forEach(qsoBand::addItem);
         qsoBand.setSelectedItem(QsoBand.BAND_80m);
+    }
+
+    private Component getCallLookupPanel() {
+        FormLayout layout = new FormLayout("f:p:g, 3dlu, p", "p");
+
+        return FormBuilder.create()
+                .layout(layout)
+                .add(qsoCall).xy(1, 1)
+                .add(qsoLookup).xy(3, 1)
+                .build();
     }
 
     private Component getMainPanel() {
@@ -173,7 +254,7 @@ public class QsoImportPanel extends ImportPanel {
                 .add(cloudlogStation).xy(3,3)
 
                 .addLabel("Call:").xy(1,5)
-                .add(qsoCall).xy(3,5)
+                .add(getCallLookupPanel()).xy(3,5)
                 .addLabel("RST (S):").xy(1,7)
                 .add(qsoRstS).xy(3,7)
                 .addLabel("RST (R):").xy(1,9)
@@ -209,7 +290,7 @@ public class QsoImportPanel extends ImportPanel {
                 qsoTime.setText(timeFormatter.format(getGmtDateTime()));
             }
         };
-        timer = new Timer(1000, updateClockAction); // Timer wyzwala się co 1000ms (1 sekunda)
+        timer = new Timer(1000, updateClockAction);
         timer.start();
     }
 
@@ -242,7 +323,7 @@ public class QsoImportPanel extends ImportPanel {
         @Override
         protected Void doInBackground() throws Exception {
             log.info("QSO to add: {}", qso);
-            status = service.importQso(settings, station.getStationId(), qso); //FIXME:
+            status = service.importQso(settings, station.getStationId(), qso);
             return null;
         }
 
@@ -259,7 +340,35 @@ public class QsoImportPanel extends ImportPanel {
             qsoComment.setText("");
         }
 
+    }
 
+    class QrzLookupWorker extends SwingWorker<Void, Void> {
+        private final String call;
+        private Optional<QRZSearchResult> result;
+
+        public QrzLookupWorker(String call) {
+            this.call = call;
+        }
+
+        @Override
+        protected Void doInBackground()  {
+            log.info("Call to lookup: {}", call);
+            qrzService.ifPresent(value -> result = value.qrzCallsignSearch(call));
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            if (result.isPresent()) {
+                QRZSearchResult qrz = result.get();
+                log.info("Call found in QRZ: {}, {}, {}", qrz.getCall(), qrz.getFname(), qrz.getAddrLine2());
+                qsoName.setText(qrz.getFname());
+                qsoQth.setText(qrz.getAddrLine2());
+            } else {
+                log.info("Call not found in QRZ");
+            }
+            qsoLookup.setEnabled(true);
+        }
     }
 
     private ZonedDateTime getGmtDateTime() {

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>pl.sp6pat.ham</groupId>
 	<artifactId>cloudlog-simple-logger</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>cloudlog-simple-logger</name>
 	<description>Simple logger for cloudlog</description>
 	<properties>
@@ -25,10 +25,7 @@
 	</repositories>
 
 	<dependencies>
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.boot</groupId>-->
-<!--			<artifactId>spring-boot-starter-actuator</artifactId>-->
-<!--		</dependency>-->
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -99,21 +96,6 @@
 					</execution>
 				</executions>
 			</plugin>
-<!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-shade-plugin</artifactId>-->
-<!--				<version>3.5.1</version>-->
-<!--				<configuration>-->
-<!--				</configuration>-->
-<!--				<executions>-->
-<!--					<execution>-->
-<!--						<phase>package</phase>-->
-<!--						<goals>-->
-<!--							<goal>shade</goal>-->
-<!--						</goals>-->
-<!--					</execution>-->
-<!--				</executions>-->
-<!--			</plugin>-->
 		</plugins>
 	</build>
 
