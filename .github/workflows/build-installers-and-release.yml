@@ -113,10 +113,17 @@ jobs:
           name: linux-installer
 
       - id: download-windows-installer
-        name: Download Windows installer
+        name: Download Windows installer (exe)
         uses: actions/download-artifact@v3
         with:
           name: windows-installer
+
+      - id: download-windows-installer-msi
+        name: Download Windows installer (msi)
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-installer-msi
+
 
       - id: rename-downloaded-files
         name: Rename downloaded files
@@ -124,6 +131,7 @@ jobs:
           ls -al 
           mv cloudlogsimplelogger_1.0-1_amd64.deb cloudlogsimplelogger_1.0.deb
           mv CloudlogSimpleLogger-1.0.exe cloudlogsimplelogger-1.0.exe
+          mv CloudlogSimpleLogger-1.0.msi cloudlogsimplelogger-1.0.msi
           ls -alR
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
@@ -133,20 +141,22 @@ jobs:
         if: false
         run: |
           # Move tag
-          git tag -d example-release
-          git push --delete origin example-release
-          git tag -a example-release -m "Example of a Release"
+          git tag -d 1.0.0
+          git push --delete origin 1.0.0
+          git tag -a 1.0.0 -m "First release 1.0.0"
           git push --follow-tags
+
       - id: create-release
         name: Create GitHub release
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: example-release
-          release_name: example-release
+          tag_name: 1.0.0
+          release_name: 1.0.0
           draft: false
           prerelease: false
+
       - id: release-linux-installer
         name: Release Linux installer
         uses: actions/upload-release-asset@latest
@@ -157,8 +167,9 @@ jobs:
           asset_path: cloudlogsimplelogger_1.0.deb
           asset_name: cloudlogsimplelogger_1.0.deb
           asset_content_type: application/x-binary
-      - id: release-windows-installer
-        name: Release Windows installer
+
+      - id: release-windows-installer-exe
+        name: Release Windows installer (exe)
         uses: actions/upload-release-asset@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -166,4 +177,15 @@ jobs:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: cloudlogsimplelogger-1.0.exe
           asset_name: cloudlogsimplelogger-1.0.exe
+          asset_content_type: application/x-binary
+
+      - id: release-windows-installer-msi
+        name: Release Windows installer (msi)
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: cloudlogsimplelogger-1.0.msi
+          asset_name: cloudlogsimplelogger-1.0.msi
           asset_content_type: application/x-binary
