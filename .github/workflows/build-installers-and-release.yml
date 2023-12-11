@@ -54,7 +54,7 @@ jobs:
         run: mvn package
 
       - name: Create Linux Installer
-        run: jpackage -n CloudlogSimpleLogger --type deb --app-version "1.1.0" --icon src/main/resources/static/cloudlog-simple-logger.ico --linux-menu-group "HAM" --linux-shortcut -i target/. --main-jar cloudlog-simple-logger-1.0.0.jar -d target/.
+        run: jpackage -n CloudlogSimpleLogger --type deb --app-version "1.1.0" --icon src/main/resources/static/cloudlog-simple-logger.ico --linux-menu-group "HAM" --linux-shortcut -i target/. --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
 
       - id: ls-files
         name: List files
