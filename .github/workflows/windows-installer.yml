@@ -21,7 +21,7 @@ jobs:
         run: mvn package
 
       - name: Create Windows Installer
-        run: jpackage --type msi --name CloudlogSimpleLogger --app-version "1.1.0" --icon src/main/resources/static/cloudlog-simple-logger.png --win-console --win-menu --win-shortcut -input target/. --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
+        run: jpackage --type msi --name CloudlogSimpleLogger --app-version "1.1.0" --icon src/main/resources/static/cloudlog-simple-logger.png --win-console --win-menu --win-shortcut --input target/. --main-jar cloudlog-simple-logger-1.1.0.jar -d target/.
 
       - id: ls-files
         name: List files
