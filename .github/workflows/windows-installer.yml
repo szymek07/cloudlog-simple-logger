@@ -1,4 +1,4 @@
-name: Build Installers
+name: Release nad build installers
 
 #on: [push, pull_request]
 on: [workflow_dispatch]
@@ -61,7 +61,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          upload_url: https://uploads.github.com/repos/szymek07/cloudlog-simple-logger/releases/133476802/assets{?name,label}
           asset_path: cloudlogsimplelogger-1.1.0.msi
           asset_name: cloudlogsimplelogger-1.1.0.msi
           asset_content_type: application/x-binary
