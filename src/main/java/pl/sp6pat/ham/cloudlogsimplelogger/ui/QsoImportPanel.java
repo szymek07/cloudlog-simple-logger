@@ -73,7 +73,7 @@ public class QsoImportPanel extends ImportPanel {
         qsoTime = new JFormattedTextField();
         qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
 
-        if (StringUtils.hasText(settings.getQrzLogin()) && StringUtils.hasText(settings.getQrzPass())) {
+        if (settings != null && StringUtils.hasText(settings.getQrzLogin()) && StringUtils.hasText(settings.getQrzPass())) {
             log.info("Creating QRZ service");
             byte[] decodedBytes = Base64.getDecoder().decode(settings.getQrzPass());
             String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
