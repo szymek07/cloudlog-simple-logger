@@ -130,7 +130,7 @@ jobs:
         run: |
           ls -al 
           mv cloudlogsimplelogger_1.1.0-1_amd64.deb cloudlogsimplelogger_1.1.0.deb
-          mv CloudlogSimpleLogger-1.1.0.msi cloudlogsimplelogger-1.1.1.msi
+          mv CloudlogSimpleLogger-1.1.0.msi cloudlogsimplelogger-1.1.0.msi
           ls -al
 
       # CREATE GITHUB RELEASE AND ADD ASSETS
@@ -142,7 +142,7 @@ jobs:
           # Move tag
           git tag -d 1.1.0
           git push --delete origin 1.1.0
-          git tag -a 1.0.0 -m "First release 1.1.0"
+          git tag -a 1.1.0 -m "First release 1.1.0"
           git push --follow-tags
 
       - id: create-release
@@ -187,8 +187,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: cloudlogsimplelogger-1.1.1.msi
-          asset_name: cloudlogsimplelogger-1.1.1.msi
+          asset_path: cloudlogsimplelogger-1.1.0.msi
+          asset_name: cloudlogsimplelogger-1.1.0.msi
           asset_content_type: application/x-binary
 
       - id: release-runnable-jar
