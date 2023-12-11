@@ -65,7 +65,7 @@ jobs:
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: target/cloudlogsimplelogger_1.1.0_amd64.deb
+          path: target/cloudlogsimplelogger_1.1.0-1_amd64.deb
           name: linux-installer
           retention-days: 1
 
@@ -92,7 +92,7 @@ jobs:
         name: Rename downloaded files
         run: |
           ls -al 
-          mv cloudlogsimplelogger_1.1.0_amd64.deb cloudlogsimplelogger_1.1.0.deb
+          mv cloudlogsimplelogger_1.1.0-1_amd64.deb cloudlogsimplelogger_1.1.0.deb
           mv CloudlogSimpleLogger-1.1.0.msi cloudlogsimplelogger-1.1.1.msi
           ls -al
 
