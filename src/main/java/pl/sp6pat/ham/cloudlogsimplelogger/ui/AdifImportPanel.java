@@ -102,6 +102,7 @@ public class AdifImportPanel extends ImportPanel {
         fileChooser.setFileFilter(filter);
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
+            appLogs.setText("");
             File selectedFile = fileChooser.getSelectedFile();
             adifPath.setText(selectedFile.getAbsolutePath());
 
@@ -124,6 +125,10 @@ public class AdifImportPanel extends ImportPanel {
             reader.setQuirksMode(true);
             buffInput = new BufferedReader(new FileReader(file));
             return reader.read(buffInput);
+        } catch (Exception e) {
+            log.error("Error: ", e);
+            appLogs.append("Error: " + e.getMessage() + "\n");
+            throw e;
         } finally {
             try {
                 if (buffInput != null) {
