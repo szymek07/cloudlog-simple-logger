@@ -323,7 +323,7 @@ public class QsoImportPanel extends ImportPanel {
         @Override
         protected Void doInBackground() throws Exception {
             log.info("QSO to add: {}", qso);
-            status = service.importQso(settings, station.getStationId(), qso);
+            status = service.importQso(station.getStationId(), qso);
             return null;
         }
 

@@ -7,17 +7,16 @@ import org.marsik.ham.adif.Adif3Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
-import org.springframework.http.codec.xml.Jaxb2XmlEncoder;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import java.util.List;
 
 public class CloudlogIntegrationService {
 
@@ -30,25 +29,17 @@ public class CloudlogIntegrationService {
     public CloudlogIntegrationService(Settings settings) {
         this.settings = settings;
 
-        //FIXME: tylko do QRZ
-        ExchangeStrategies strategies = ExchangeStrategies
-                .builder()
-                .codecs(clientDefaultCodecsConfigurer -> {
-                    clientDefaultCodecsConfigurer.defaultCodecs().jaxb2Encoder(new Jaxb2XmlEncoder());
-                    clientDefaultCodecsConfigurer.defaultCodecs().jaxb2Decoder(new Jaxb2XmlDecoder());
-                })
-                .build();
-
         if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
             webClient = WebClient.builder()
-                    .exchangeStrategies(strategies)
                     .baseUrl(settings.getCloudlogUrl())
                     .build();
         }
     }
     public List<Station> getStations() {
+        byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
+        String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         return webClient.get()
-                .uri("/index.php/api/station_info/{API_KEY}", settings.getApiKey())
+                .uri("/index.php/api/station_info/{API_KEY}", apiKey)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToFlux(Station.class)
@@ -56,10 +47,11 @@ public class CloudlogIntegrationService {
                 .block();
     }
 
-    public String importQso(Settings setting, String stationId, String qso) throws JsonProcessingException {
-
+    public String importQso(String stationId, String qso) throws JsonProcessingException {
+        byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
+        String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         Qso qsoRequest = Qso.builder()
-                .key(setting.getApiKey())
+                .key(apiKey)
                 .stationProfileId(String.valueOf(stationId))
                 .type("adif")
                 .string(qso)
@@ -68,13 +60,14 @@ public class CloudlogIntegrationService {
         return uploadToCloudlog(qsoRequest);
     }
 
-    public String importQso(Settings setting, String stationId, Adif3Record qso) throws JsonProcessingException {
-
+    public String importQso(String stationId, Adif3Record qso) throws JsonProcessingException {
+        byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
+        String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         AdiWriter writer = new AdiWriter();
         writer.append(qso);
 
         Qso qsoRequest = Qso.builder()
-                .key(setting.getApiKey())
+                .key(apiKey)
                 .stationProfileId(String.valueOf(stationId))
                 .type("adif")
                 .string(writer.toString())

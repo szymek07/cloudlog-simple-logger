@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>pl.sp6pat.ham</groupId>
 	<artifactId>cloudlog-simple-logger</artifactId>
-	<version>1.1.0</version>
+	<version>1.2.0</version>
 	<name>cloudlog-simple-logger</name>
 	<description>Simple logger for cloudlog</description>
 	<properties>
@@ -64,6 +64,12 @@
 			<groupId>com.github.MarSik</groupId>
 			<artifactId>adif</artifactId>
 			<version>v1.2.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.14.0</version>
 		</dependency>
 
 		<dependency>
