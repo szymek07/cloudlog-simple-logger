@@ -61,7 +61,7 @@ jobs:
         name: List files
         run: |
           dir target
-          ren CloudlogSimpleLogger-1.2.0.msi CloudlogSimpleLogger-console-1.2.0.msi
+          ren target\CloudlogSimpleLogger-1.2.0.msi target\CloudlogSimpleLogger-console-1.2.0.msi
           dir target
 
       - id: upload-installer
