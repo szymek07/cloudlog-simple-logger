@@ -119,12 +119,6 @@ jobs:
         with:
           name: windows-installer-msi
 
-      - id: download-windows-installer-msi-with-console
-        name: Download Windows installer (msi) with console
-        uses: actions/download-artifact@v3
-        with:
-          name: windows-installer-msi-console
-
       - id: download-runnable-jar
         name: Download Runnable jar
         uses: actions/download-artifact@v3
