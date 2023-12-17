@@ -57,12 +57,25 @@ jobs:
       - name: Create Windows Installer
         run: jpackage --type msi --name CloudlogSimpleLogger --app-version "1.2.0" --icon src/main/resources/static/cloudlog-simple-logger.png --win-console --win-menu --win-shortcut --input target/. --main-jar cloudlog-simple-logger-1.2.0.jar -d target/.
 
-      - id: ls-files
-        name: List files
+      - id: ls-files-before
+        name: List files before
         run: |
-          cd target
           dir 
-          ren CloudlogSimpleLogger-1.2.0.msi CloudlogSimpleLogger-console-1.2.0.msi
+
+      - id: ch-dir
+        name: Change dir
+        run: |
+          cd target 
+
+
+      - id: rename-files
+        name: Rename file
+        run: |
+          ren CloudlogSimpleLogger-1.2.0.msi CloudlogSimpleLogger-console-1.2.0.msi 
+
+      - id: ls-files-after
+        name: List files after
+        run: |
           dir 
 
       - id: upload-installer
