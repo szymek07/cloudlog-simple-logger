@@ -60,15 +60,16 @@ jobs:
       - id: ls-files
         name: List files
         run: |
-          dir target
-          ren target\CloudlogSimpleLogger-1.2.0.msi target\CloudlogSimpleLogger-console-1.2.0.msi
-          dir target
+          cd target
+          dir 
+          ren CloudlogSimpleLogger-1.2.0.msi CloudlogSimpleLogger-console-1.2.0.msi
+          dir 
 
       - id: upload-installer
         name: Upload installer
         uses: actions/upload-artifact@v3
         with:
-          path: target/CloudlogSimpleLogger-console-1.2.0.msi
+          path: CloudlogSimpleLogger-console-1.2.0.msi
           name: windows-installer-msi-console
           retention-days: 1
 
