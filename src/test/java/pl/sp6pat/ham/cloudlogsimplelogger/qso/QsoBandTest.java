@@ -2,9 +2,8 @@ package pl.sp6pat.ham.cloudlogsimplelogger.qso;
 
 import org.junit.jupiter.api.Test;
 import org.marsik.ham.adif.enums.Band;
-import org.marsik.ham.adif.enums.Mode;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QsoBandTest {
 
@@ -23,7 +22,15 @@ class QsoBandTest {
         assertEquals(Band.BAND_6m, Band.findByCode(QsoBand.BAND_6m.getBand()));
         assertEquals(Band.BAND_4m, Band.findByCode(QsoBand.BAND_4m.getBand()));
         assertEquals(Band.BAND_2m, Band.findByCode(QsoBand.BAND_2m.getBand()));
+        assertEquals(Band.BAND_1_25m, Band.findByCode(QsoBand.BAND_1_25m.getBand()));
         assertEquals(Band.BAND_70cm, Band.findByCode(QsoBand.BAND_70cm.getBand()));
+        assertEquals(Band.BAND_33cm, Band.findByCode(QsoBand.BAND_33cm.getBand()));
+        assertEquals(Band.BAND_23cm, Band.findByCode(QsoBand.BAND_23cm.getBand()));
+        assertEquals(Band.BAND_13cm, Band.findByCode(QsoBand.BAND_13cm.getBand()));
+        assertEquals(Band.BAND_9cm, Band.findByCode(QsoBand.BAND_9cm.getBand()));
+        assertEquals(Band.BAND_6cm, Band.findByCode(QsoBand.BAND_6cm.getBand()));
+        assertEquals(Band.BAND_3cm, Band.findByCode(QsoBand.BAND_3cm.getBand()));
+        assertEquals(Band.BAND_1_25cm, Band.findByCode(QsoBand.BAND_1_25cm.getBand()));
     }
 
 }
