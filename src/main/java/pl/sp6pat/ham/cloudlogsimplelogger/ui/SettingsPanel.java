@@ -46,10 +46,10 @@ public class SettingsPanel extends JPanel {
             String key = Base64.getEncoder().encodeToString(String.valueOf(settApiKey.getPassword()).getBytes());
             String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).getBytes());
             Settings settings = Settings.builder()
-                    .cloudlogUrl(settCloudlogUrl.getText())
+                    .cloudlogUrl(settCloudlogUrl.getText().trim())
                     .apiKey(key)
-                    .operator(settOperator.getText())
-                    .qrzLogin(settQrzLogin.getText())
+                    .operator(settOperator.getText().trim())
+                    .qrzLogin(settQrzLogin.getText().trim())
                     .qrzPass(pass)
                     .build();
             SettingsManager.save(settings);
