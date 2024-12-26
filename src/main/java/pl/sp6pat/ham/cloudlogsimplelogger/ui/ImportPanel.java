@@ -44,7 +44,7 @@ public abstract class ImportPanel extends JPanel {
                     for (Station item : data) {
                         cloudlogStation.addItem(item);
                     }
-                    Optional<Station> activeStation = data.stream().filter(e -> e.getStationActive() > 0).findFirst();
+                    Optional<Station> activeStation = data.stream().filter(e -> e.getStationActive() != null).findFirst();
                     activeStation.ifPresent(cloudlogStation::setSelectedItem);
                 } catch (InterruptedException | ExecutionException e) {
                     appLogs.setText("Cloudlog error: " + e.getMessage());
