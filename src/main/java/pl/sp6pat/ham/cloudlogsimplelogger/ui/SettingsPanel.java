@@ -43,8 +43,8 @@ public class SettingsPanel extends JPanel {
         settQrzPassShow.addActionListener(e -> settQrzPass.setEchoChar(settQrzPassShow.isSelected() ? '\u0000' : (Character)UIManager.get("PasswordField.echoChar")));
 
         settSave.addActionListener(e -> {
-            String key = Base64.getEncoder().encodeToString(String.valueOf(settApiKey.getPassword()).getBytes());
-            String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).getBytes());
+            String key = Base64.getEncoder().encodeToString(String.valueOf(settApiKey.getPassword()).trim().getBytes());
+            String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).trim().getBytes());
             Settings settings = Settings.builder()
                     .cloudlogUrl(settCloudlogUrl.getText().trim())
                     .apiKey(key)
