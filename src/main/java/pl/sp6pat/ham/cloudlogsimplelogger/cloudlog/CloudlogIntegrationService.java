@@ -47,30 +47,19 @@ public class CloudlogIntegrationService {
                 .block();
     }
 
-    public String importQso(String stationId, String qso) throws JsonProcessingException {
-        byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
-        String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
-        Qso qsoRequest = Qso.builder()
-                .key(apiKey)
-                .stationProfileId(String.valueOf(stationId))
-                .type("adif")
-                .string(qso)
-                .build();
-
-        return uploadToCloudlog(qsoRequest);
-    }
-
     public String importQso(String stationId, Adif3Record qso) throws JsonProcessingException {
         byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
         String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         AdiWriter writer = new AdiWriter();
         writer.append(qso);
 
+        String qsoStr = replaceCommaToDotInFreq(writer.toString());
+
         Qso qsoRequest = Qso.builder()
                 .key(apiKey)
                 .stationProfileId(String.valueOf(stationId))
                 .type("adif")
-                .string(writer.toString())
+                .string(qsoStr)
                 .build();
 
         return uploadToCloudlog(qsoRequest);
@@ -97,12 +86,24 @@ public class CloudlogIntegrationService {
         Pattern pattern = Pattern.compile("Message: (.+?)</p>");
         Matcher matcher = pattern.matcher(result);
 
-        log.debug("Result:\n" + result);
+        log.debug("Result:\n{}", result);
         if (matcher.find()) {
             return matcher.group(1);
         } else {
             return "QSO Added";
         }
+    }
+
+    private String replaceCommaToDotInFreq(String input) {
+        String regex = "(<FREQ:\\d+>)(\\d+),(\\d+)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+
+        if (matcher.find()) {
+            log.warn("Replaced comma to dot in freq: {}", input);
+            return matcher.replaceFirst(matcher.group(1) + matcher.group(2) + "." + matcher.group(3));
+        }
+        return input;
     }
 
 }
