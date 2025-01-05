@@ -11,13 +11,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Optional;
 
 public class SettingsManager {
 
     private static final Logger log = LoggerFactory.getLogger(SettingsManager.class);
 
-    public static void save(Settings settings) {
+    private Settings settings;
+
+    public void save(Settings settings) {
 
         File yamlFile = getConfigFile();
         Yaml yaml = new Yaml();
@@ -28,9 +29,11 @@ public class SettingsManager {
             throw new RuntimeException(e.getMessage());
         }
 
+        load();
+
     }
 
-    public static Optional<Settings> load() {
+    public void load() {
         LoaderOptions loaderOptions = new LoaderOptions();
         TagInspector taginspector = tag -> tag.getClassName().equals(Settings.class.getName());
         loaderOptions.setTagInspector(taginspector);
@@ -39,13 +42,16 @@ public class SettingsManager {
         if (yamlFile.exists()) {
             Yaml yaml = new Yaml(new Constructor(Settings.class, loaderOptions));
             try (FileReader reader = new FileReader(yamlFile)) {
-                return Optional.ofNullable(yaml.load(reader));
+                settings = yaml.load(reader);
             } catch (IOException e) {
                 log.error("Load settings error", e);
                 throw new RuntimeException("Load settings error", e);
             }
         }
-        return Optional.empty();
+    }
+
+    public Settings getSettings() {
+        return settings;
     }
 
     private static File getConfigFile() {

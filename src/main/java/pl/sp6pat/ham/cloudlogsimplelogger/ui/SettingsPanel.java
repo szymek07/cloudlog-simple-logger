@@ -25,10 +25,13 @@ public class SettingsPanel extends JPanel {
     private final JCheckBox settQrzPassShow = new JCheckBox();
     private final JButton settSave = new JButton("Save");
 
-    public SettingsPanel(Settings settings) {
+    private final SettingsManager settingsMgr;
+
+    public SettingsPanel(SettingsManager settingsMgr) {
+        this.settingsMgr = settingsMgr;
         initializeComponents();
         initializeActions();
-        fillPanel(settings);
+        fillPanel();
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
     }
@@ -43,8 +46,8 @@ public class SettingsPanel extends JPanel {
         settQrzPassShow.addActionListener(e -> settQrzPass.setEchoChar(settQrzPassShow.isSelected() ? '\u0000' : (Character)UIManager.get("PasswordField.echoChar")));
 
         settSave.addActionListener(e -> {
-            String key = Base64.getEncoder().encodeToString(String.valueOf(settApiKey.getPassword()).getBytes());
-            String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).getBytes());
+            String key = Base64.getEncoder().encodeToString(String.valueOf(settApiKey.getPassword()).trim().getBytes());
+            String pass = Base64.getEncoder().encodeToString(String.valueOf(settQrzPass.getPassword()).trim().getBytes());
             Settings settings = Settings.builder()
                     .cloudlogUrl(settCloudlogUrl.getText().trim())
                     .apiKey(key)
@@ -52,7 +55,8 @@ public class SettingsPanel extends JPanel {
                     .qrzLogin(settQrzLogin.getText().trim())
                     .qrzPass(pass)
                     .build();
-            SettingsManager.save(settings);
+
+            settingsMgr.save(settings);
             JOptionPane.showMessageDialog(this, "Saved");
         });
     }
@@ -91,7 +95,8 @@ public class SettingsPanel extends JPanel {
                 .build();
     }
 
-    private void fillPanel(Settings settings) {
+    private void fillPanel() {
+        Settings settings = settingsMgr.getSettings();
         if (settings == null) {
             log.warn("Settings not found");
             return;
@@ -109,5 +114,8 @@ public class SettingsPanel extends JPanel {
         settQrzPass.setText(qrzPass);
     }
 
+    public void reloadData() {
+        this.fillPanel();
+    }
 
 }

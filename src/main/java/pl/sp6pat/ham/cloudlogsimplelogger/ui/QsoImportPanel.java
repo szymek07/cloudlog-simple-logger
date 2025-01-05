@@ -3,6 +3,7 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+import org.marsik.ham.adif.AdiWriter;
 import org.marsik.ham.adif.Adif3Record;
 import org.marsik.ham.adif.enums.Band;
 import org.marsik.ham.adif.enums.Mode;
@@ -16,6 +17,7 @@ import pl.sp6pat.ham.cloudlogsimplelogger.qrz.QRZService;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoBand;
 import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -63,8 +65,17 @@ public class QsoImportPanel extends ImportPanel {
     private final JTextArea qsoComment = new JTextArea();
     private final JButton qsoAdd = new JButton("Add QSO");
 
-    public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
-        super(service, settings);
+    public QsoImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr) {
+        super(service, settingsMgr);
+
+        setupDateTimeFormatters();
+
+        qsoDate = new JFormattedTextField();
+        qsoDate.setFormatterFactory(dateFormatterFactory);
+        qsoTime = new JFormattedTextField();
+        qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
+
+        Settings settings = settingsMgr.getSettings();
 
         if (settings != null && StringUtils.hasText(settings.getQrzLogin()) && StringUtils.hasText(settings.getQrzPass())) {
             log.info("Creating QRZ service");
@@ -78,7 +89,7 @@ public class QsoImportPanel extends ImportPanel {
 
         initializeComponents();
         initializeActions();
-        fillComboBoxes();
+        reloadData();
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
 
@@ -143,6 +154,8 @@ public class QsoImportPanel extends ImportPanel {
             QsoBand qsoBandSelectedItem = (QsoBand) qsoBand.getSelectedItem();
             Optional<LocalDate> parsedDate = getParsedDate();
             Optional<LocalTime> parsedTime = getParsedTime();
+
+            Settings settings = settingsMgr.getSettings();
 
             if (stationSelectedItem == null || qsoModeSelectedItem == null || qsoBandSelectedItem == null || !StringUtils.hasText(qsoCall.getText()) || parsedDate.isEmpty() || parsedTime.isEmpty()) {
                 return;
@@ -216,12 +229,12 @@ public class QsoImportPanel extends ImportPanel {
         }
     }
 
-    protected void fillComboBoxes() {
-       super.fillComboBoxes();
-
+    protected void fillModeAndBandComboBoxes() {
+        qsoMode.removeAllItems();
         Arrays.stream(QsoMode.values()).forEach(qsoMode::addItem);
         qsoMode.setSelectedItem(QsoMode.SSB);
 
+        qsoBand.removeAllItems();
         Arrays.stream(QsoBand.values()).forEach(qsoBand::addItem);
         qsoBand.setSelectedItem(QsoBand.BAND_80m);
     }
@@ -373,4 +386,8 @@ public class QsoImportPanel extends ImportPanel {
         return ZonedDateTime.now(ZoneId.of("GMT"));
     }
 
+    public void reloadData() {
+        super.reloadData();
+        this.fillModeAndBandComboBoxes();
+    }
 }

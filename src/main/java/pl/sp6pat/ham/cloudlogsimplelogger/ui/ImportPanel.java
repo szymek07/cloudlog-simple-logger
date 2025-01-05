@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
 import javax.swing.*;
 import java.util.List;
@@ -17,20 +18,20 @@ public abstract class ImportPanel extends JPanel {
     private static final Logger log = LoggerFactory.getLogger(ImportPanel.class);
 
     protected final CloudlogIntegrationService service;
-    protected final Settings settings;
+    protected final SettingsManager settingsMgr;
 
     protected final JComboBox<Station> cloudlogStation = new JComboBox<>();
     protected final JTextArea appLogs  = new JTextArea();
 
-    public ImportPanel(CloudlogIntegrationService service, Settings settings) {
+    public ImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr) {
         this.service = service;
-        this.settings = settings;
+        this.settingsMgr = settingsMgr;
 
         appLogs.setEditable(false);
         appLogs.setLineWrap(true);
     }
 
-    protected void fillComboBoxes() {
+    private void fillComboBoxes() {
         SwingWorker<List<Station>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<Station> doInBackground() {
@@ -52,6 +53,7 @@ public abstract class ImportPanel extends JPanel {
             }
         };
 
+        Settings settings = settingsMgr.getSettings();
         if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
             worker.execute();
         } else {
@@ -61,5 +63,10 @@ public abstract class ImportPanel extends JPanel {
 
     }
 
+    protected void reloadData() {
+        this.appLogs.setText(null);
+        this.cloudlogStation.removeAllItems();
+        this.fillComboBoxes();
+    }
 
 }
