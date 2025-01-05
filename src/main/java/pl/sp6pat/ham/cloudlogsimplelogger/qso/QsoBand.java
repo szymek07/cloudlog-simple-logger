@@ -2,36 +2,36 @@ package pl.sp6pat.ham.cloudlogsimplelogger.qso;
 
 public enum QsoBand {
 
-    BAND_160m("160m", 1900000, 1838000, 1830000),
-    BAND_80m("80m", 3700000, 3583000, 3550000),
-    BAND_60m("60m", 5330000, 5330000, 5260000),
-    BAND_40m("40m", 7100000, 7040000, 7020000),
-    BAND_30m("30m", 10120000, 10145000, 10120000),
-    BAND_20m("20m", 14200000, 14080000, 14020000),
-    BAND_17m("17m", 18130000, 18105000, 18080000),
-    BAND_15m("15m", 21300000, 21080000, 21020000),
-    BAND_12m("12m", 24950000, 24925000, 24900000),
-    BAND_10m("10m", 28300000, 28120000, 28050000),
-    BAND_6m("6m", 50150000, 50230000, 50090000),
-    BAND_4m("4m", 70200000, 70200000, 70200000),
-    BAND_2m("2m", 144300000, 144370000, 144050000),
-    BAND_1_25m("1.25m", 222100000, 222100000, 222100000),
-    BAND_70cm("70cm", 432200000, 432088000, 432050000),
-    BAND_33cm("33cm", 902100000, 902100000, 902100000),
-    BAND_23cm("23cm", 1296000000, 1296138000, 129600000),
-    BAND_13cm("13cm", 2320800000L, 2320800000L, 2320800000L),
-    BAND_9cm("9cm", 3410000000L, 3410000000L, 3400000000L),
-    BAND_6cm("6cm", 5670000000L, 5670000000L, 5670000000L),
-    BAND_3cm("3cm", 10225000000L, 10225000000L, 10225000000L),
-    BAND_1_25cm("1.25cm",24000000000L, 24000000000L, 240000000000L)
+    BAND_160m("160m", 1.9f, 1.838f, 1.83f),
+    BAND_80m("80m", 3.7f, 3.583f, 3.55f),
+    BAND_60m("60m", 5.33f, 5.33f, 5.26f),
+    BAND_40m("40m", 7.1f, 7.04f, 7.02f),
+    BAND_30m("30m", 10.12f, 10.145f, 10.12f),
+    BAND_20m("20m", 14.2f, 14.08f, 14.02f),
+    BAND_17m("17m", 18.13f, 18.105f, 18.08f),
+    BAND_15m("15m", 21.3f, 21.08f, 21.02f),
+    BAND_12m("12m", 24.95f, 24.925f, 24.9f),
+    BAND_10m("10m", 28.3f, 28.12f, 28.05f),
+    BAND_6m("6m", 50.15f, 50.23f, 50.09f),
+    BAND_4m("4m", 70.2f, 70.2f, 70.2f),
+    BAND_2m("2m", 144.3f, 144.37f, 144.05f),
+    BAND_1_25m("1.25m", 222.1f, 222.1f, 222.1f),
+    BAND_70cm("70cm", 432.2f, 432.088f, 432.05f),
+    BAND_33cm("33cm", 902.1f, 902.1f, 902.1f),
+    BAND_23cm("23cm", 1296.0f, 1296.138f, 1296.0f),
+    BAND_13cm("13cm", 2320.8f, 2320.8f, 2320.8f),
+    BAND_9cm("9cm", 3410.0f, 3410.0f, 3400.0f),
+    BAND_6cm("6cm", 5670.0f, 5670.0f, 5670.0f),
+    BAND_3cm("3cm", 10225.0f, 10225.0f, 10225.0f),
+    BAND_1_25cm("1.25cm",24000.0f, 24000.0f, 24000.0f)
     ;
 
     private final String band;
-    private final long voiceFreq;
-    private final long dataFreq;
-    private final long cwFreq;
+    private final float voiceFreq;
+    private final float dataFreq;
+    private final float cwFreq;
 
-    QsoBand(String band, long voiceFreq, long dataFreq, long cwFreq) {
+    QsoBand(String band, float voiceFreq, float dataFreq, float cwFreq) {
         this.band = band;
         this.voiceFreq = voiceFreq;
         this.dataFreq = dataFreq;
@@ -45,15 +45,15 @@ public enum QsoBand {
         return band;
     }
 
-    public long getVoiceFreq() {
+    public float getVoiceFreq() {
         return voiceFreq;
     }
 
-    public long getDataFreq() {
+    public float getDataFreq() {
         return dataFreq;
     }
 
-    public long getCwFreq() {
+    public float getCwFreq() {
         return cwFreq;
     }
 

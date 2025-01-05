@@ -3,7 +3,6 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import org.marsik.ham.adif.AdiWriter;
 import org.marsik.ham.adif.Adif3Record;
 import org.marsik.ham.adif.enums.Band;
 import org.marsik.ham.adif.enums.Mode;
@@ -19,6 +18,7 @@ import pl.sp6pat.ham.cloudlogsimplelogger.qso.QsoMode;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
@@ -49,13 +49,13 @@ public class QsoImportPanel extends ImportPanel {
     private DefaultFormatterFactory dateFormatterFactory;
     private Timer timer;
     private final JCheckBox qsoOffline = new JCheckBox("Offline");
-    private final JFormattedTextField qsoDate;
-    private final JFormattedTextField qsoTime;
+    private final JFormattedTextField qsoDate = new JFormattedTextField();
+    private final JFormattedTextField qsoTime = new JFormattedTextField();
     private final JComboBox<QsoMode> qsoMode = new JComboBox<>();
     private final JComboBox<QsoBand> qsoBand = new JComboBox<>();
     private final JTextField qsoFreq = new JTextField();
     private final JTextField qsoCall = new JTextField();
-    private final JButton qsoLookup = new JButton();
+    private final JButton qsoLookup = new JButton("QRZ");
     private final JTextField qsoRstS = new JTextField("59");
     private final JTextField qsoRstR = new JTextField("59");
     private final JTextField qsoName = new JTextField();
@@ -65,13 +65,6 @@ public class QsoImportPanel extends ImportPanel {
 
     public QsoImportPanel(CloudlogIntegrationService service, Settings settings) {
         super(service, settings);
-
-        setupDateTimeFormatters();
-
-        qsoDate = new JFormattedTextField();
-        qsoDate.setFormatterFactory(dateFormatterFactory);
-        qsoTime = new JFormattedTextField();
-        qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
 
         if (settings != null && StringUtils.hasText(settings.getQrzLogin()) && StringUtils.hasText(settings.getQrzPass())) {
             log.info("Creating QRZ service");
@@ -108,9 +101,14 @@ public class QsoImportPanel extends ImportPanel {
     }
 
     private void initializeComponents() {
-        qsoLookup.setText("QRZ");
+        setupDateTimeFormatters();
+        qsoDate.setFormatterFactory(dateFormatterFactory);
         qsoDate.setEditable(false);
+
+        qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
         qsoTime.setEditable(false);
+
+        ((AbstractDocument) qsoFreq.getDocument()).setDocumentFilter(new NumberAndSingleDotFilter());
     }
 
     private void initializeActions() {
@@ -168,17 +166,17 @@ public class QsoImportPanel extends ImportPanel {
             Band band = Band.findByCode(qsoBandSelectedItem.getBand());
             record.setBand(band);
 
-            record.setFreq(Long.parseLong(qsoFreq.getText()) / 1000.0);
+            Double freq = Double.parseDouble(qsoFreq.getText());
+            record.setFreq(freq);
 
             record.setStationCallsign(stationSelectedItem.getStationCallsign());
             record.setOperator(settings.getOperator());
 
-            AdiWriter writer = new AdiWriter();
-            writer.append(record);
 
             qsoAdd.setEnabled(false);
             appLogs.setText("");
-            AddQsoWorker worker = new AddQsoWorker(writer.toString(), stationSelectedItem);
+
+            AddQsoWorker worker = new AddQsoWorker(record, stationSelectedItem);
             worker.execute();
 
         });
@@ -274,7 +272,7 @@ public class QsoImportPanel extends ImportPanel {
                 .add(qsoMode).xy(3, 21)
                 .addLabel("Band:").xy(1,23)
                 .add(qsoBand).xy(3, 23)
-                .addLabel("Freq:").xy(1,25)
+                .addLabel("Freq [MHz]:").xy(1,25)
                 .add(qsoFreq).xy(3, 25)
 
                 .add(qsoAdd).xyw(1, 27, 3)
@@ -299,7 +297,7 @@ public class QsoImportPanel extends ImportPanel {
         QsoBand band = (QsoBand) qsoBand.getSelectedItem();
 
         if (mode != null && band != null) {
-            long freq =
+            float freq =
                     switch (mode.getKind()) {
                         case VOICE -> band.getVoiceFreq();
                         case DATA -> band.getDataFreq();
@@ -311,11 +309,11 @@ public class QsoImportPanel extends ImportPanel {
     }
 
     class AddQsoWorker extends SwingWorker<Void, Void> {
-        private final String qso;
+        private final Adif3Record qso;
         private final Station station;
         private String status;
 
-        public AddQsoWorker(String qso, Station station) {
+        public AddQsoWorker(Adif3Record qso, Station station) {
             this.qso = qso;
             this.station = station;
         }
