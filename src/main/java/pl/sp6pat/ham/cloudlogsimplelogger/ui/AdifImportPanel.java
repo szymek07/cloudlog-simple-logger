@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -31,18 +32,16 @@ public class AdifImportPanel extends ImportPanel {
 
     private List<Adif3Record> adifRecords;
 
-
     private final JTextField adifPath = new JTextField();
     private final JButton adifBrowse = new JButton("...");
     private final JLabel adifQsoCnt = new JLabel();
     private final JButton adifImport = new JButton("Import");
     private final JProgressBar adifProgress = new JProgressBar();
 
-
-    public AdifImportPanel(CloudlogIntegrationService service, Settings settings) {
-        super(service, settings);
+    public AdifImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr) {
+        super(service, settingsMgr);
         initializeComponents();
-        fillComboBoxes();
+        reloadData();
         initializeActions();
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
@@ -162,6 +161,7 @@ public class AdifImportPanel extends ImportPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
+            Settings settings = settingsMgr.getSettings();
             for (Adif3Record c: qsos) {
                 try {
                     if (StringUtils.hasText(settings.getOperator())) {
@@ -293,4 +293,7 @@ public class AdifImportPanel extends ImportPanel {
         adifProgress.setString("");
     }
 
+    public void reloadData() {
+        super.reloadData();
+    }
 }

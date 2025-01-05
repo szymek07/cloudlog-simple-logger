@@ -8,16 +8,16 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
-import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.AdifImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.QsoImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.SettingsPanel;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.WindowEvent;
-import java.util.Optional;
 
 @SpringBootApplication
 public class CloudlogSimpleLoggerApplication extends JFrame  {
@@ -26,7 +26,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 
 	public final static String PRG_NAME = "cloudlog-simple-logger";
 
-	private Settings settings;
+	private SettingsManager settingsMgr;
 	private final CloudlogIntegrationService service;
 
 	private final JTabbedPane tab = new JTabbedPane();
@@ -45,7 +45,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	public CloudlogSimpleLoggerApplication() {
 		super("Cloudlog Simple Logger");
 		loadSettings();
-		service = new CloudlogIntegrationService(settings);
+		service = new CloudlogIntegrationService(settingsMgr);
 		initializeComponents();
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setContentPane(getMainPanel());
@@ -61,18 +61,38 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	}
 
 	private void initializeComponents() {
-		SettingsPanel settingsPanel = new SettingsPanel(settings);
-		AdifImportPanel adifImportPanel = new AdifImportPanel(service, settings);
-		QsoImportPanel qsoImportPanel = new QsoImportPanel(service, settings);
+		QsoImportPanel qsoImportPanel = new QsoImportPanel(service, settingsMgr);
+		AdifImportPanel adifImportPanel = new AdifImportPanel(service, settingsMgr);
+		SettingsPanel settingsPanel = new SettingsPanel(settingsMgr);
 
 		tab.add("QSO", qsoImportPanel);
 		tab.add("Import", adifImportPanel);
 		tab.add("Settings", settingsPanel);
+
+		tab.addChangeListener(e -> {
+            int selectedIndex = tab.getSelectedIndex();
+			log.debug("Active tab index: {}", selectedIndex);
+
+            switch (selectedIndex) {
+                case 0:
+                    qsoImportPanel.reloadData();
+                    break;
+                case 1:
+                    adifImportPanel.reloadData();
+                    break;
+                case 2:
+                    settingsPanel.reloadData();
+                    break;
+                default:
+                    log.debug("Unknown tab");
+                    break;
+            }
+        });
 	}
 
 	private void loadSettings() {
-		Optional<Settings> settingsOpt = SettingsManager.load();
-        settingsOpt.ifPresent(value -> settings = value);
+		settingsMgr = new SettingsManager();
+		settingsMgr.load();
 	}
 
 	private Container getMainPanel() {

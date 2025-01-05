@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -22,23 +23,18 @@ public class CloudlogIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(CloudlogIntegrationService.class);
 
-    private final Settings settings;
+    private final SettingsManager settingsMgr;
 
-    private WebClient webClient;
+    public CloudlogIntegrationService(SettingsManager settingsMgr) {
+        this.settingsMgr = settingsMgr;
 
-    public CloudlogIntegrationService(Settings settings) {
-        this.settings = settings;
 
-        if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
-            webClient = WebClient.builder()
-                    .baseUrl(settings.getCloudlogUrl())
-                    .build();
-        }
     }
     public List<Station> getStations() {
+        Settings settings = settingsMgr.getSettings();
         byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
         String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
-        return webClient.get()
+        return getWebClient().get()
                 .uri("/index.php/api/station_info/{API_KEY}", apiKey)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
@@ -48,6 +44,7 @@ public class CloudlogIntegrationService {
     }
 
     public String importQso(String stationId, String qso) throws JsonProcessingException {
+        Settings settings = settingsMgr.getSettings();
         byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
         String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         Qso qsoRequest = Qso.builder()
@@ -61,6 +58,7 @@ public class CloudlogIntegrationService {
     }
 
     public String importQso(String stationId, Adif3Record qso) throws JsonProcessingException {
+        Settings settings = settingsMgr.getSettings();
         byte[] apiKeyDecodedBytes = Base64.getDecoder().decode(settings.getApiKey());
         String apiKey = new String(apiKeyDecodedBytes, StandardCharsets.UTF_8);
         AdiWriter writer = new AdiWriter();
@@ -82,7 +80,7 @@ public class CloudlogIntegrationService {
 
         log.debug(body);
 
-        String result = this.webClient.post()
+        String result = getWebClient().post()
                 .uri("/index.php/api/qso")
                 .body(Mono.just(body), String.class)
                 .accept(MediaType.APPLICATION_JSON)
@@ -103,6 +101,16 @@ public class CloudlogIntegrationService {
         } else {
             return "QSO Added";
         }
+    }
+
+    private WebClient getWebClient() {
+        Settings settings = settingsMgr.getSettings();
+        if (settings != null && StringUtils.hasText(settings.getCloudlogUrl()) && StringUtils.hasText(settings.getApiKey())) {
+            return WebClient.builder()
+                    .baseUrl(settings.getCloudlogUrl())
+                    .build();
+        }
+        return null;
     }
 
 }
