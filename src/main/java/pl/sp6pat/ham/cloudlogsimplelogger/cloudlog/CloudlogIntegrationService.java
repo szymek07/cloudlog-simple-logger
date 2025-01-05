@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;

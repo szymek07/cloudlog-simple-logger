@@ -3,7 +3,6 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import org.marsik.ham.adif.AdiWriter;
 import org.marsik.ham.adif.Adif3Record;
 import org.marsik.ham.adif.enums.Band;
 import org.marsik.ham.adif.enums.Mode;
@@ -69,10 +68,7 @@ public class QsoImportPanel extends ImportPanel {
         super(service, settingsMgr);
 
         setupDateTimeFormatters();
-
-        qsoDate = new JFormattedTextField();
         qsoDate.setFormatterFactory(dateFormatterFactory);
-        qsoTime = new JFormattedTextField();
         qsoTime.setFormatterFactory(timeFormatterFactoryWithSeconds);
 
         Settings settings = settingsMgr.getSettings();
