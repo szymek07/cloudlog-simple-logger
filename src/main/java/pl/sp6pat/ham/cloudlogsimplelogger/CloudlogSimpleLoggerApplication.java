@@ -10,6 +10,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.AdifImportPanel;
+import pl.sp6pat.ham.cloudlogsimplelogger.ui.N1MMImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.QsoImportPanel;
 import pl.sp6pat.ham.cloudlogsimplelogger.ui.SettingsPanel;
 
@@ -63,10 +64,12 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private void initializeComponents() {
 		QsoImportPanel qsoImportPanel = new QsoImportPanel(service, settingsMgr);
 		AdifImportPanel adifImportPanel = new AdifImportPanel(service, settingsMgr);
+		N1MMImportPanel n1MMImportPanel = new N1MMImportPanel(service, settingsMgr);
 		SettingsPanel settingsPanel = new SettingsPanel(settingsMgr);
 
 		tab.add("QSO", qsoImportPanel);
 		tab.add("Import", adifImportPanel);
+		tab.add("N1MM", n1MMImportPanel);
 		tab.add("Settings", settingsPanel);
 
 		tab.addChangeListener(e -> {
@@ -80,7 +83,10 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
                 case 1:
                     adifImportPanel.reloadData();
                     break;
-                case 2:
+				case 2:
+					n1MMImportPanel.reloadData();
+					break;
+                case 3:
                     settingsPanel.reloadData();
                     break;
                 default:
