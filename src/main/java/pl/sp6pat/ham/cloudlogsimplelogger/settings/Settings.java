@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.swing.*;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,5 +16,6 @@ public class Settings {
     private String operator;
     private String qrzLogin;
     private String qrzPass;
+    private Boolean preserveComment;
 
 }

@@ -23,6 +23,7 @@ public class SettingsPanel extends JPanel {
     private final JTextField settQrzLogin = new JTextField();
     private final JPasswordField settQrzPass = new JPasswordField();
     private final JCheckBox settQrzPassShow = new JCheckBox();
+    private final JCheckBox settPreserveComment = new JCheckBox();
     private final JButton settSave = new JButton("Save");
 
     private final SettingsManager settingsMgr;
@@ -39,6 +40,7 @@ public class SettingsPanel extends JPanel {
     private void initializeComponents() {
         settApiKeyShow.setToolTipText("Show/Hide API Key");
         settQrzPassShow.setToolTipText("Show/Hide QRZ Password");
+        settPreserveComment.setToolTipText("Preserve Comment Between QSOs");
     }
 
     private void initializeActions() {
@@ -54,6 +56,7 @@ public class SettingsPanel extends JPanel {
                     .operator(settOperator.getText().trim())
                     .qrzLogin(settQrzLogin.getText().trim())
                     .qrzPass(pass)
+                    .preserveComment(settPreserveComment.isSelected())
                     .build();
 
             settingsMgr.save(settings);
@@ -64,7 +67,7 @@ public class SettingsPanel extends JPanel {
     private Component getMainPanel() {
         FormLayout layout = new FormLayout(
                 "p, 3dlu, f:50dlu:g, 3dlu, p",
-                "f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p");
+                "f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p, 3dlu, f:p");
 
         return FormBuilder.create()
                 .layout(layout)
@@ -79,7 +82,9 @@ public class SettingsPanel extends JPanel {
                 .add(settQrzLogin).xy(3, 7)
                 .addLabel("QRZ Pass:").xy(1, 9)
                 .add(getPasswordFieldPanel(settQrzPass, settQrzPassShow)).xy(3, 9)
-                .add(settSave).xy(3,11)
+                .addLabel("Preserve comment:").xy(1, 11)
+                .add(settPreserveComment).xy(3, 11)
+                .add(settSave).xy(3,13)
                 .build();
     }
 
@@ -112,6 +117,12 @@ public class SettingsPanel extends JPanel {
         byte[] qrzPassDecodedBytes = Base64.getDecoder().decode(settings.getQrzPass());
         String qrzPass = new String(qrzPassDecodedBytes, StandardCharsets.UTF_8);
         settQrzPass.setText(qrzPass);
+
+        if (settings.getPreserveComment() != null && settings.getPreserveComment()) {
+            settPreserveComment.setSelected(true);
+        } else {
+            settPreserveComment.setSelected(false);
+        }
     }
 
     public void reloadData() {
