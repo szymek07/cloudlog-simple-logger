@@ -61,7 +61,7 @@ public class QsoImportPanel extends ImportPanel {
     private final JTextField qsoRstR = new JTextField("59");
     private final JTextField qsoName = new JTextField();
     private final JTextField qsoQth = new JTextField();
-    private final JTextArea qsoComment = new JTextArea();
+    private final JTextField qsoComment = new JTextField();
     private final JButton qsoAdd = new JButton("Add QSO");
 
     public QsoImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr) {
@@ -249,7 +249,7 @@ public class QsoImportPanel extends ImportPanel {
         FormLayout layout = new FormLayout(
                 "r:p, 3dlu, f:p:g",
                 "p, 3dlu, p, 8dlu, " +
-                        "p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, f:20dlu:g, 8dlu, " +
+                        "p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, p, 8dlu, " +
                         "p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, p, 6dlu, " +
                         "p, 6dlu, f:20dlu:g");
 
@@ -271,7 +271,7 @@ public class QsoImportPanel extends ImportPanel {
                 .addLabel("QTH:").xy(1,13)
                 .add(qsoQth).xy(3, 13)
                 .addLabel("Comment:").xy(1,15)
-                .add(new JScrollPane(qsoComment)).xy(3, 15)
+                .add(qsoComment).xy(3, 15)
 
                 .addLabel("Date:").xy(1,17)
                 .add(qsoDate).xy(3, 17)
