@@ -116,6 +116,7 @@ public class QsoImportPanel extends ImportPanel {
         qsoTime.setEditable(false);
 
         ((AbstractDocument) qsoFreq.getDocument()).setDocumentFilter(new NumberAndSingleDotFilter());
+        ((AbstractDocument) qsoCall.getDocument()).setDocumentFilter(new CallsignFilter());
     }
 
     private void initializeActions() {
