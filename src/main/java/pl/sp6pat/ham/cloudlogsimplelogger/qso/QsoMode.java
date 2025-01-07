@@ -8,7 +8,9 @@ public enum QsoMode {
     FM("FM", QsoKind.VOICE),
     CW("CW", QsoKind.CW),
     SSB("SSB", QsoKind.VOICE),
-    FT8("FT8", QsoKind.DATA);
+    FT8("FT8", QsoKind.DATA),
+    DMR("DIGITALVOICE", QsoKind.VOICE),
+    C4FM("C4FM", QsoKind.VOICE);
 
     private final String mode;
     private final QsoKind kind;
