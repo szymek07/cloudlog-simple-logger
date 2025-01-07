@@ -186,7 +186,9 @@ public class QsoImportPanel extends ImportPanel {
             qsoAdd.setEnabled(false);
             appLogs.setText("");
 
-            AddQsoWorker worker = new AddQsoWorker(record, stationSelectedItem);
+            Settings s = settingsMgr.getSettings();
+
+            AddQsoWorker worker = new AddQsoWorker(record, stationSelectedItem, s);
             worker.execute();
 
         });
@@ -321,11 +323,13 @@ public class QsoImportPanel extends ImportPanel {
     class AddQsoWorker extends SwingWorker<Void, Void> {
         private final Adif3Record qso;
         private final Station station;
+        private final Settings settings;
         private String status;
 
-        public AddQsoWorker(Adif3Record qso, Station station) {
+        public AddQsoWorker(Adif3Record qso, Station station, Settings settings) {
             this.qso = qso;
             this.station = station;
+            this.settings = settings;
         }
 
         @Override
@@ -345,7 +349,10 @@ public class QsoImportPanel extends ImportPanel {
             qsoRstR.setText("59");
             qsoName.setText("");
             qsoQth.setText("");
-            qsoComment.setText("");
+
+            if (settings.getPreserveComment() != null && !settings.getPreserveComment()) {
+                qsoComment.setText("");
+            }
         }
 
     }
