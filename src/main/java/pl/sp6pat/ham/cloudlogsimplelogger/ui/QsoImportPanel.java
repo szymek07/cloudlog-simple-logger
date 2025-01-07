@@ -33,6 +33,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
@@ -85,6 +87,7 @@ public class QsoImportPanel extends ImportPanel {
 
         initializeComponents();
         initializeActions();
+        initializeFocusTravelsalPolicy();
         reloadData();
         this.setLayout(new FormLayout("f:p:g", "f:p:g"));
         this.add(getMainPanel(), new CellConstraints().xy(1, 1));
@@ -253,9 +256,27 @@ public class QsoImportPanel extends ImportPanel {
                         "p, 3dlu, p, 3dlu, p, 3dlu, p, 3dlu, p, 6dlu, " +
                         "p, 6dlu, f:20dlu:g");
 
+        List<Component> order = new ArrayList<>();
+        order.add(qsoOffline);
+        order.add(cloudlogStation);
+        order.add(qsoCall);
+        order.add(qsoLookup);
+        order.add(qsoRstS);
+        order.add(qsoRstR);
+        order.add(qsoName);
+        order.add(qsoQth);
+        order.add(qsoDate);
+        order.add(qsoTime);
+        order.add(qsoMode);
+        order.add(qsoBand);
+        order.add(qsoFreq);
+        order.add(qsoAdd);
+
+
         return FormBuilder.create()
                 .layout(layout)
                 .padding("10dlu, 10dlu, 10dlu, 10dlu")
+                .focusTraversalPolicy(new QsoImportPanelTravelsalPolicy(order))
                 .add(qsoOffline).xyw(1, 1, 3)
                 .addLabel("Station:").xy(1,3)
                 .add(cloudlogStation).xy(3,3)
@@ -288,6 +309,13 @@ public class QsoImportPanel extends ImportPanel {
                 .addLabel("Status:"). xy(1,29)
                 .add(new JScrollPane(appLogs)).xy(3, 29)
                 .build();
+    }
+
+    private void initializeFocusTravelsalPolicy() {
+
+
+        // Tworzymy niestandardową FocusTraversalPolicy
+
     }
 
     private void createTimer() {
