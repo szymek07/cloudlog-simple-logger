@@ -2,7 +2,9 @@ package pl.sp6pat.ham.cloudlogsimplelogger.cloudlog;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.marsik.ham.adif.AdiReader;
 import org.marsik.ham.adif.AdiWriter;
+import org.marsik.ham.adif.Adif3;
 import org.marsik.ham.adif.Adif3Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +15,13 @@ import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,39 +73,64 @@ public class CloudlogIntegrationService {
 
         log.debug(body);
 
-        String result = getWebClient().post()
+        QsoResult result = getWebClient().post()
                 .uri("/index.php/api/qso")
                 .body(Mono.just(body), String.class)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(QsoResult.class)
                 .block();
 
         if (result == null) {
             return "QSO Not added";
-        }
-
-        Pattern pattern = Pattern.compile("Message: (.+?)</p>");
-        Matcher matcher = pattern.matcher(result);
-
-        log.debug("Result:\n{}", result);
-        if (matcher.find()) {
-            return matcher.group(1);
+        } else if ("created".equalsIgnoreCase(result.getStatus())) {
+            String call = getCallsign(result.getString());
+            return call + ": QSO added";
         } else {
-            return "QSO Added";
+            return null;
         }
     }
 
+    private static String getCallsign(String adiRecord)  {
+        StringReader stringReader = new StringReader(adiRecord);
+        BufferedReader bufferedReader = new BufferedReader(stringReader);
+
+        AdiReader ar = new AdiReader();
+        try {
+            Optional<Adif3> adif3 = ar.read(bufferedReader);
+            if (adif3.isPresent()) {
+                List<Adif3Record> records = adif3.get().getRecords();
+                Adif3Record first = records.get(0);
+                return first.getCall();
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return "???";
+    }
+
     private String replaceCommaToDotInFreq(String input) {
+        String result = input;
         String regex = "(<FREQ:\\d+>)(\\d+),(\\d+)";
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
+        Matcher matcher = pattern.matcher(result);
 
         if (matcher.find()) {
-            log.warn("Replaced comma to dot in freq: {}", input);
-            return matcher.replaceFirst(matcher.group(1) + matcher.group(2) + "." + matcher.group(3));
+            log.warn("Replaced comma to dot in freq: {}", result);
+            result = matcher.replaceFirst(matcher.group(1) + matcher.group(2) + "." + matcher.group(3));
         }
-        return input;
+
+        regex = "(<FREQ_RX:\\d+>)(\\d+),(\\d+)";
+        pattern = Pattern.compile(regex);
+        matcher = pattern.matcher(result);
+
+        if (matcher.find()) {
+            log.warn("Replaced comma to dot in freq rx: {}", result);
+            result = matcher.replaceFirst(matcher.group(1) + matcher.group(2) + "." + matcher.group(3));
+        }
+
+        return result;
     }
 
     private WebClient getWebClient() {

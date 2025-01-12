@@ -3,40 +3,37 @@ package pl.sp6pat.ham.cloudlogsimplelogger.ui;
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-import org.apache.commons.lang3.tuple.Pair;
-import org.marsik.ham.adif.AdiReader;
-import org.marsik.ham.adif.Adif3;
 import org.marsik.ham.adif.Adif3Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
-import org.w3c.dom.Document;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.Station;
-import pl.sp6pat.ham.cloudlogsimplelogger.settings.Settings;
+import pl.sp6pat.ham.cloudlogsimplelogger.n1mm.N1MMContactMessage;
+import pl.sp6pat.ham.cloudlogsimplelogger.n1mm.N1MMContactMessageType;
+import pl.sp6pat.ham.cloudlogsimplelogger.n1mm.N1MMService;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 public class N1MMImportPanel extends ImportPanel {
 
     private static final Logger log = LoggerFactory.getLogger(N1MMImportPanel.class);
 
+    private final N1MMService n1MMService;
     private final JCheckBox enableN1MM = new JCheckBox("Enable N1MM");
-    private final JTextField port = new JTextField("2345");
+    private final JTextField port = new JTextField("9876");
 
-    public N1MMImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr) {
+    private DatagramSocket socket;
+    private Thread socketThread;
+    private volatile boolean running = false;
+
+
+    public N1MMImportPanel(CloudlogIntegrationService service, SettingsManager settingsMgr, N1MMService n1MMService) {
         super(service, settingsMgr);
+        this.n1MMService = n1MMService;
         initializeComponents();
         reloadData();
         initializeActions();
@@ -50,10 +47,10 @@ public class N1MMImportPanel extends ImportPanel {
 
     private void initializeActions() {
         enableN1MM.addChangeListener(e -> {
-            if (enableN1MM.isSelected()) {
-                startServer();
-            } else {
-                //TODO: interrupt server
+            if (enableN1MM.isSelected() && !running) {
+                startSocket();
+            } else if (!enableN1MM.isSelected() && running){
+                stopSocket();
             }
 
         });
@@ -81,30 +78,100 @@ public class N1MMImportPanel extends ImportPanel {
                 .build();
     }
 
-    private void startServer() {
-        int p = Integer.parseInt(port.getText().trim());
-
-    }
-
-    private static void handleClient(Socket socket) {
-
-    }
-
-    private static void processXml(String xml) {
+    private void startSocket() {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(new ByteArrayInputStream(xml.getBytes()));
+            int p = Integer.parseInt(port.getText().trim());
+            Station stationSelectedItem = (Station) cloudlogStation.getSelectedItem();
+            if (stationSelectedItem == null) {
+                appLogs.setText("No station was selected\n");
+                enableN1MM.setSelected(false);
+                return;
+            }
+            log.debug("Selected port: {}", p);
+            socket = new DatagramSocket(p);
+            running = true;
+            socketThread = new Thread(() -> {
+                byte[] buffer = new byte[4024];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                while (running) {
+                    try {
+                        log.debug("Waiting for message...");
 
-            // Przetwarzanie XML: na przykład odczytanie wartości pola <mycall>
-            String myCall = document.getElementsByTagName("mycall").item(0).getTextContent();
-            log.debug("MyCall: {}", myCall);
+                        socket.receive(packet);
+                        String received = new String(packet.getData(), 0, packet.getLength());
+                        log.info("Received message:\n{}", received);
+                        N1MMContactMessage n1mmContact = n1MMService.processXml(received);
+                        log.debug("N1MMContactMessage: {}", n1mmContact);
+                        Adif3Record r = n1mmContact.getAdif3Record();
+                        SwingUtilities.invokeLater(() -> appLogs.append("Received: " + r.getQsoDate() + "  " + r.getTimeOn() + " " + r.getCall() + "\n"));
+                        AddQsoWorker worker = new AddQsoWorker(n1mmContact, stationSelectedItem);
+                        worker.execute();
+                    } catch (Exception ex) {
+                        if (running) {
+                            log.error("Error while receiving message", ex);
+                            SwingUtilities.invokeLater(() -> appLogs.append("Error while receiving message:\n" + ex.getLocalizedMessage() + "\n"));
+                        }
+                    }
+                }
+                log.debug("Socket stopping...");
+            });
+            socketThread.start();
+            SwingUtilities.invokeLater(() -> appLogs.setText("Listening for UDP messages on port: " + p + " ...\n"));
+            log.debug("Listening for UDP messages on port: {} ...", p);
         } catch (Exception ex) {
-            System.err.println("Error parsing XML: " + ex.getMessage());
+            log.error("Datagram socket creation error", ex);
+            SwingUtilities.invokeLater(() -> appLogs.append("Datagram socket creation error:\n" + ex.getLocalizedMessage() + "\n"));
+            enableN1MM.setSelected(false);
+        }
+    }
+
+    private void stopSocket() {
+        try {
+            running = false;
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+            if (socketThread != null && socketThread.isAlive()) {
+                socketThread.join();
+            }
+            log.debug("Socket stopped.");
+            SwingUtilities.invokeLater(() -> appLogs.append("Listening for UDP messages stopped\n"));
+        } catch (Exception ex) {
+            log.error("Datagram socket stopping error", ex);
+            SwingUtilities.invokeLater(() -> appLogs.append("Datagram socket stopping error:\n" + ex.getLocalizedMessage() + "\n"));
+
         }
     }
 
     public void reloadData() {
         super.reloadData();
     }
+
+    class AddQsoWorker extends SwingWorker<Void, Void> {
+        private final N1MMContactMessage contact;
+        private final Station station;
+        private String status;
+
+        public AddQsoWorker(N1MMContactMessage contact, Station station) {
+            this.contact = contact;
+            this.station = station;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            log.info("N1MM Contact to add: {}", contact);
+
+            if (N1MMContactMessageType.CONTACT_ADD == contact.getType()) {
+                status = service.importQso(station.getStationId(), contact.getAdif3Record());
+            }
+            log.info("N1MM Contact add status: {}", status);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            appLogs.append(status + "\n");
+        }
+    }
+
 }
