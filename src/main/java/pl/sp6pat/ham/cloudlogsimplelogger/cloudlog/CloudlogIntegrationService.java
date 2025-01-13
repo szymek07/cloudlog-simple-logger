@@ -64,14 +64,16 @@ public class CloudlogIntegrationService {
                 .string(qsoStr)
                 .build();
 
-        return uploadToCloudlog(qsoRequest);
+        String result = uploadToCloudlog(qsoRequest);
+        log.debug("Result: {}", result);
+        return result;
     }
 
     private String uploadToCloudlog(Qso qsoRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         String body = objectMapper.writeValueAsString(qsoRequest) ;
 
-        log.debug(body);
+        log.debug("Request body: {}", body);
 
         QsoResult result = getWebClient().post()
                 .uri("/index.php/api/qso")
@@ -86,6 +88,8 @@ public class CloudlogIntegrationService {
         } else if ("created".equalsIgnoreCase(result.getStatus())) {
             String call = getCallsign(result.getString());
             return call + ": QSO added";
+        } else if ("failed".equalsIgnoreCase(result.getStatus())) {
+            return result.getReason();
         } else {
             return null;
         }

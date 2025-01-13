@@ -15,5 +15,6 @@ public class QsoResult {
     private String status;
     private String type;
     private String string;
+    private String reason;
 
 }
