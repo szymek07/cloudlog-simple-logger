@@ -4,7 +4,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-public class UdpSender {
+public class N1MMUdpSender {
     public static void main(String[] args) {
         String message = ADD_CONTACT;
         String host = "localhost";

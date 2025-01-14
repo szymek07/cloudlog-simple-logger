@@ -64,28 +64,43 @@ public class CloudlogIntegrationService {
                 .string(qsoStr)
                 .build();
 
-        return uploadToCloudlog(qsoRequest);
+        String result = uploadToCloudlog(qsoRequest);
+        log.debug("Result: {}", result);
+        return result;
     }
 
     private String uploadToCloudlog(Qso qsoRequest) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         String body = objectMapper.writeValueAsString(qsoRequest) ;
 
-        log.debug(body);
+        log.debug("Request body: {}", body);
 
-        QsoResult result = getWebClient().post()
-                .uri("/index.php/api/qso")
-                .body(Mono.just(body), String.class)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(QsoResult.class)
-                .block();
+        QsoResult result;
+
+
+        try {
+            result = getWebClient().post()
+                    .uri("/index.php/api/qso")
+                    .body(Mono.just(body), String.class)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(QsoResult.class)
+                    .block();
+        } catch (Exception e) {
+            result = QsoResult.builder()
+                    .status("failed")
+                    .reason(e.getMessage())
+                    .build();
+            log.error("Error: ", e);
+        }
 
         if (result == null) {
             return "QSO Not added";
         } else if ("created".equalsIgnoreCase(result.getStatus())) {
             String call = getCallsign(result.getString());
             return call + ": QSO added";
+        } else if ("failed".equalsIgnoreCase(result.getStatus())) {
+            return result.getReason();
         } else {
             return null;
         }

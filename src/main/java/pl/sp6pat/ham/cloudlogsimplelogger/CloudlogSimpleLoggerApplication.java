@@ -8,12 +8,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import pl.sp6pat.ham.cloudlogsimplelogger.cloudlog.CloudlogIntegrationService;
+import pl.sp6pat.ham.cloudlogsimplelogger.jtdx.JTDXService;
 import pl.sp6pat.ham.cloudlogsimplelogger.n1mm.N1MMService;
 import pl.sp6pat.ham.cloudlogsimplelogger.settings.SettingsManager;
-import pl.sp6pat.ham.cloudlogsimplelogger.ui.AdifImportPanel;
-import pl.sp6pat.ham.cloudlogsimplelogger.ui.N1MMImportPanel;
-import pl.sp6pat.ham.cloudlogsimplelogger.ui.QsoImportPanel;
-import pl.sp6pat.ham.cloudlogsimplelogger.ui.SettingsPanel;
+import pl.sp6pat.ham.cloudlogsimplelogger.ui.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +27,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 	private SettingsManager settingsMgr;
 	private final CloudlogIntegrationService service;
 	private final N1MMService n1mmService;
+	private final JTDXService jtdxService;
 
 	private final JTabbedPane tab = new JTabbedPane();
 
@@ -48,6 +47,7 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		loadSettings();
 		service = new CloudlogIntegrationService(settingsMgr);
 		n1mmService = new N1MMService();
+		jtdxService = new JTDXService();
 		initializeComponents();
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setContentPane(getMainPanel());
@@ -66,11 +66,13 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 		QsoImportPanel qsoImportPanel = new QsoImportPanel(service, settingsMgr);
 		AdifImportPanel adifImportPanel = new AdifImportPanel(service, settingsMgr);
 		N1MMImportPanel n1MMImportPanel = new N1MMImportPanel(service, settingsMgr, n1mmService);
+		JTDXImportPanel jtdxImportPanel = new JTDXImportPanel(service, settingsMgr, jtdxService);
 		SettingsPanel settingsPanel = new SettingsPanel(settingsMgr);
 
 		tab.add("QSO", qsoImportPanel);
 		tab.add("Import", adifImportPanel);
 		tab.add("N1MM", n1MMImportPanel);
+		tab.add("JTDX", jtdxImportPanel);
 		tab.add("Settings", settingsPanel);
 
 		tab.addChangeListener(e -> {
@@ -87,7 +89,10 @@ public class CloudlogSimpleLoggerApplication extends JFrame  {
 				case 2:
 					n1MMImportPanel.reloadData();
 					break;
-                case 3:
+				case 3:
+					jtdxImportPanel.reloadData();
+					break;
+                case 4:
                     settingsPanel.reloadData();
                     break;
                 default:
