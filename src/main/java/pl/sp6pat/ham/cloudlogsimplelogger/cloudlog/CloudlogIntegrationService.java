@@ -75,13 +75,24 @@ public class CloudlogIntegrationService {
 
         log.debug("Request body: {}", body);
 
-        QsoResult result = getWebClient().post()
-                .uri("/index.php/api/qso")
-                .body(Mono.just(body), String.class)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(QsoResult.class)
-                .block();
+        QsoResult result;
+
+
+        try {
+            result = getWebClient().post()
+                    .uri("/index.php/api/qso")
+                    .body(Mono.just(body), String.class)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(QsoResult.class)
+                    .block();
+        } catch (Exception e) {
+            result = QsoResult.builder()
+                    .status("failed")
+                    .reason(e.getMessage())
+                    .build();
+            log.error("Error: ", e);
+        }
 
         if (result == null) {
             return "QSO Not added";

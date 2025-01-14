@@ -6,7 +6,7 @@ import java.net.InetAddress;
 
 public class JTDXUdpSender {
     public static void main(String[] args) {
-        String message = ADD_CONTACT_WRONG_CALL;
+        String message = ADD_CONTACT;
         String host = "localhost";
         int port = 9876;
 
