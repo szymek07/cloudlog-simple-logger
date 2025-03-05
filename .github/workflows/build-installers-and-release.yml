@@ -141,25 +141,25 @@ jobs:
       # DOWNLOAD INSTALLERS
       - id: download-linux-installer
         name: Download Linux installer
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: linux-installer
 
       - id: download-windows-installer-msi
         name: Download Windows installer (msi)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-installer-msi
 
       - id: download-runnable-jar
         name: Download Runnable jar
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: runnable-jar
 
       - id: download-macos-installer
         name: Download MacOS installer (dmg)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos-installer
 
