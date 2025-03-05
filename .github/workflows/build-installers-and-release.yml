@@ -116,13 +116,7 @@ jobs:
         run: mvn package
 
       - name: Create macOS Installer
-        run: jpackage --type dmg \
-          --name CloudlogSimpleLogger \
-          --app-version "1.2.6" \
-          --icon src/main/resources/static/cloudlog-simple-logger.ico \
-          --input target/. \
-          --main-jar cloudlog-simple-logger-1.2.6.jar \
-          -d target/.
+        run: jpackage --type dmg --name CloudlogSimpleLogger --app-version "1.2.6" --input target/. --main-jar cloudlog-simple-logger-1.2.6.jar -d target/.
 
       - id: ls-files
         name: List files
