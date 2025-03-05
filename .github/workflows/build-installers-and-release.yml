@@ -31,7 +31,7 @@ jobs:
 
       - id: upload-installer
         name: Upload installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/CloudlogSimpleLogger-1.2.6.msi
           name: windows-installer-msi
@@ -63,7 +63,7 @@ jobs:
 
       - id: upload-installer
         name: Upload installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/cloudlogsimplelogger_1.2.6-1_amd64.deb
           name: linux-installer
@@ -93,7 +93,7 @@ jobs:
 
       - id: upload-installer
         name: Upload installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/cloudlog-simple-logger-1.2.6.jar
           name: runnable-jar
@@ -131,7 +131,7 @@ jobs:
 
       - id: upload-installer
         name: Upload installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: target/CloudlogSimpleLogger-1.2.6.dmg
           name: macos-installer
